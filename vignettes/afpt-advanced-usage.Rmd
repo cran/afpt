@@ -1,0 +1,82 @@
+---
+title: "AFPT -- Advanced Usage"
+author: "Marco Klein Heerenbrink"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    fig_caption: yes
+  html_document:
+    toc: true
+    toc_depth: 2
+bibliography: references.bib
+csl: refstyle_authoryear.csl
+vignette: >
+  %\VignetteIndexEntry{Advanced Usage}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+```{r}
+library('afpt')
+```
+
+In [AFPT Basic Usage](./afpt-basic-usage.html), the most basic workflow in the afpt package was explained. This vignette is intended to elaborate on more advanced features of the package.
+
+
+```{r}
+myBird <- Bird(
+  massTotal = 0.215, #  weight in kg
+  wingSpan = 0.67,  #  wingspan in m
+  wingArea = 0.0652, #  wing area in m2
+  wingbeatFrequency = 5,
+  name = 'Jackdaw',
+  name.scientific = 'Corvus monedula',
+  type = 'passerine',
+  source = 'KleinHeerenbrink M, Warfvinge K and Hedenstrom A (2016) J.Exp.Biol. 219: 10, 1572--1581'
+)
+```
+
+## Available power
+Birds flap their wings to overcome aerodynamic losses. We can work out what those losses are and from that derive that the muscles moving the wings must have a power output that balances these losses. However, there are limits to how much power (and force) a muscle can produce. The maximum power output from the muscles we call available power. Muscles are complicated, so solutions for obtaining estimates range from allometric scaling relationships to simulations at the molecular level. The model used by default by this package, the same as the one used by the Flight 1.25 software [@Pennycuick2008], is somewhere inbetween. The muscle is assumed to have a length along which shortening occurs (strain,$\epsilon = \Delta L / L$), and a cross-section accross which a force is produced (stress $\sigma = F/A$). The work performed per unit volume muscle during a contraction is then simply the product of stress and strain, or in other words, the work done during a muscle contraction is $q = \sigma \epsilon m_\text{m} / \rho$ (where $m_\text{m}$ is the muscle mass and $/rho$ is the muscle density. As the muscles are directly connected to the wings, one workloop corresponds to one wingbeat, so multiplying the muscle work with wingbeat frequency gives us the average muscle output power during a wingbeat:
+$$
+P_\text{available} = \frac{m_\text{m}}{\rho} \sigma \epsilon f
+$$
+It is then assumed that during maximum power requirements, the muscle is sized to operate at 30% of the maximum isometric stress ($\sigma_\max$), which corresponds to the maximum power output of a muscle according to Hill's hyperbolic stress-strainrate relationship for isotonic muscle contraction (assuming hyperbolic constant of 0.25$\sigma_\max$; for fast muscle at high temperatures, the hyperbolic canstant could be as high as 0.35$\sigma_\max$ in which case, the maximum power peak would be at 34%). This implicitly assumes that wingbeat frequency also matches the corresponding strain rate ($\dot{\epsilon} \approx 2\epsilon f$), to around 30% of the unloaded contraction speed (or 34% if we take the higher hyperbolic constant...). There are two possible problems with this model:
+- The model assumes that during the downstroke, the strain rate and therefore wing velocity is constant, and the force on the wing is constant too. It may be possible that tendons with spring-damper properties can modulate the motion and load to match the smooth motion of the wings.
+- The frequency dependency of the model suggests that a higher power output can be obtained by operating at higher frequencies. A higher operating frequency would result in a snowball effect, as less muscle mass would be required to power flight, which would in turn make flight require less power. Additionally, the aerodynamic model predicts higher aerodynamic efficiency for higher wingbeat frequencies. 
+
+
+
+## Flight conditions
+```{r}
+flightCondition.ISA0 <- afpt:::ISA0
+flightCondition.ISA3 <- list(
+  density = 0.9093, # [kg/m3] 3 km altitude
+  gravity = 9.81, # [m/s2]
+  viscosity = 18.63E-6, # [m2/s] 3 km altitude
+  windSpeed = 0,# [m/s]
+  windDir = 0 # [degrees] 0 degrees means wind is along the track direction
+)
+```
+
+
+### Wingbeat frequency and air density
+Birds change their wingbeat frequency depending on air density [@Schmaljohann2009]. Within the function `computeFlappingPower()` it is possible to adjust the wingbeat frequency to the current altitude, following @Pennycuick1996, $f = \left(\frac{\rho}{\rho_\text{SL}}\right)^{-3/8} f_\text{SL}$, with $f$ wingbeat frequency, $\rho$ air density and subscript $\text{SL}$ for sea level conditions. When a character string is provided as the frequency argument of any function that calls `computeFlappingPower()`, the wingbeat frequency will be recomputed according to the current flight condition:
+```{r}
+flightperf.ISA0 <- computeFlightPerformance(myBird,flightcondition=flightCondition.ISA0,frequency='recompute')
+flightperf.ISA3 <- computeFlightPerformance(myBird,flightcondition=flightCondition.ISA3,frequency='recompute')
+list(frequency.ISA0 = flightperf.ISA0$table$frequency,frequency.ISA3 = flightperf.ISA3$table$frequency)
+```
+Note that this option assumes that the `myBird$wingbeatFrequency` is the reference frequency of the bird at sea level. The increased wingbeat frequency increases flight efficiency:
+```{r}
+COT.ISA0 <- with(flightperf.ISA0$table,power.chem/speed)
+COT.ISA3 <-with(flightperf.ISA3$table,power.chem/speed)
+list(ISA0 = COT.ISA0, ISA3 = COT.ISA3)
+COT.ISA3/COT.ISA0
+```
+While in [AFPT Basic Usage](./afpt-basic-usage.html) it seemed that flying at altitude would increase the minimum cost of transport by 1%, taking into account that birds increase their wingbeat frequency when air density is reduced actually reduces cost of transport by 1%. At this point, one could wonder why birds would not increase their wingbeat frequency even further, but the reasoning from @Pennycuick1996 is that this frequency represents a natural frequency, balancing the wing moment of inertia and the aerodynamic forces.
+
+## Model uncertainty estimation
+While predictions based on flight mechanical models are rooted in physics, a great number of simplifying assumptions are made along the way. It is therefore important to understand how the model behaves in response to uncertainties. For some applications it is sufficient to run the model for different assumptions, but we can gain a more complete picture of the sensitivity of the model
+
+
+## ReferencesS

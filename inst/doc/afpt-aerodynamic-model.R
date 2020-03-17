@@ -1,7 +1,7 @@
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library('afpt')
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 myBird <- Bird(
   massTotal = 0.215, 
   wingSpan = 0.67, 
@@ -12,7 +12,7 @@ myBird <- Bird(
   source = 'KleinHeerenbrink M, Warfvinge K and Hedenström A 2016 J.Exp.Biol. 219: 10, 1572--1581'
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 speed <- seq(6,18,length.out=6) #  airspeed in m/s
 powercurve <- computeFlappingPower(myBird,speed)
 
@@ -28,20 +28,20 @@ with(powercurve , lines( speed, Dnf.par, type='b', pch=24, col='yellow3'))
 mtext(side = 1, line = 2,'Airspeed (m/s)')
 mtext(side = 2, line = 2,'Drag components (N)')
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 with(myBird,coef.bodyDragCoefficient*bodyFrontalArea)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 myBird$coef.bodyDragCoefficient <- 0.001004007 #  the product CDb*Sb
 myBird$bodyFrontalArea <- 1 #  unit area
 with(myBird,coef.bodyDragCoefficient*bodyFrontalArea)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 myBird$coef.bodyDragCoefficient <- 0.01539888 #  CDb relative to wing reference area
 myBird$bodyFrontalArea <- myBird$wingArea #  unit area
 with(myBird,coef.bodyDragCoefficient*bodyFrontalArea)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 powercurve[c('speed','amplitude','strokeplane','frequency')]
 
 ## ---- fig.show='hold', fig.width=3.45, fig.cap="**Drag factors** -- red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag."----
@@ -61,11 +61,11 @@ lines( speed, fD$pro2, type='b', pch=23, col='blue3')
 mtext(side = 1, line = 2,'Airspeed (m/s)')
 mtext(side = 2, line = 2,'Drag factors fD (-)')
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 thrustratio <- apply(powercurve[,grep('Dnf',names(powercurve))],1,sum) /
   (powercurve$L - apply(fD*powercurve[,grep('Dnf',names(powercurve))],1,sum))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 fP <- data.frame(
   ind = fP.ind(kf,phi), #  induced power
   pro0 = fP.pro0(kf,phi), #  zero lift profile power
@@ -73,7 +73,7 @@ fP <- data.frame(
   par = 0 #  parasitic power is wingbeat independent
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 kP <- 1 + fP*thrustratio
 
 ## ---- fig.show='hold', fig.width=3.45, fig.cap="**Power factors** -- red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag."----
@@ -92,6 +92,6 @@ lines( speed, kP$pro2, type='b', pch=23, col='blue3')
 mtext(side = 1, line = 2,'Airspeed (m/s)')
 mtext(side = 2, line = 2,'Power factors kP (-)')
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 powercurve[,grep('flags',names(powercurve))]
 

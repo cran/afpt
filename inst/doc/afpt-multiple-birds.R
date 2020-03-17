@@ -1,7 +1,7 @@
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(afpt)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data(climbing_birds) #  Load climbing bird data set
 
 climbing_birds <- climbing_birds#[seq(1,15,3),]
@@ -13,12 +13,12 @@ myBirds$coef.profileDragLiftFactor[myBirds$name=='Mute swan'] = 0
 
 myBirds[c('name','massTotal','wingSpan','wingArea','wingbeatFrequency')]
 
-## ------------------------------------------------------------------------
+## ---- warning = FALSE---------------------------------------------------------
 myBirds$powerAvailable <- computeAvailablePower(myBirds)
 climbperf <- findMaximumClimbRate(myBirds,maximumPower = myBirds$powerAvailable,strokeplane=20)
 climbperf[c('speed','climbRate','frequency','amplitude')]
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 minpower <- findMinimumPowerSpeed(myBirds,strokeplane=20)
 climbperf.trad <- data.frame( # compute traditional climb performance
   speed = minpower$speed,
@@ -28,7 +28,7 @@ climbperf.trad <- data.frame( # compute traditional climb performance
 climbperf[c('speed','climbRate')]/climbperf.trad # compare
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 myBirds$climbSpeed <- climbing_birds$climbSpeed # attach observed climb speeds to the bird data
 climbperf2 <- findMaximumClimbRate(
   myBirds,computeAvailablePower(myBirds),

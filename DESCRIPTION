@@ -1,7 +1,7 @@
 Package: afpt
 Title: Tools for Modelling of Animal Flight Performance
-Version: 1.0.0
-Date: 2017-08-25
+Version: 1.1.0.0
+Date: 2020-03-16
 Encoding: UTF-8
 Authors@R: c(
         person("Marco",
@@ -13,7 +13,7 @@ Authors@R: c(
                 role = c("fnd"))
         )
 Author: Marco KleinHeerenbrink [aut, cre],
-    Anders Hedenström [fnd]
+  Anders Hedenström [fnd]
 Description: Allows estimation and modelling of flight costs in animal (vertebrate) flight,
     implementing the aerodynamic power model described in Klein Heerenbrink et al.
     (2015) <doi:10.1098/rspa.2014.0952>. Taking inspiration from the program
@@ -30,7 +30,7 @@ Suggests: knitr, rmarkdown, testthat
 VignetteBuilder: knitr
 License: GPL (>= 3)
 NeedsCompilation: no
-Packaged: 2017-09-01 09:35:14 UTC; Marco
+Packaged: 2020-03-17 12:49:17 UTC; zool2198
 Maintainer: Marco KleinHeerenbrink <Marco.KleinHeerenbrink@zoo.ox.ac.uk>
 Repository: CRAN
-Date/Publication: 2017-09-01 11:19:40 UTC
+Date/Publication: 2020-03-17 13:40:02 UTC
