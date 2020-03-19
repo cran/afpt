@@ -1,7 +1,7 @@
 Package: afpt
 Title: Tools for Modelling of Animal Flight Performance
-Version: 1.1.0.0
-Date: 2020-03-16
+Version: 1.1.0.1
+Date: 2020-03-18
 Encoding: UTF-8
 Authors@R: c(
         person("Marco",
@@ -30,7 +30,7 @@ Suggests: knitr, rmarkdown, testthat
 VignetteBuilder: knitr
 License: GPL (>= 3)
 NeedsCompilation: no
-Packaged: 2020-03-17 12:49:17 UTC; zool2198
+Packaged: 2020-03-18 15:33:28 UTC; zool2198
 Maintainer: Marco KleinHeerenbrink <Marco.KleinHeerenbrink@zoo.ox.ac.uk>
 Repository: CRAN
-Date/Publication: 2020-03-17 13:40:02 UTC
+Date/Publication: 2020-03-19 17:40:02 UTC
