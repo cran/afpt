@@ -12,34 +12,66 @@
 
 <meta name="author" content="Marco Klein Heerenbrink" />
 
-<meta name="date" content="2020-03-18" />
+<meta name="date" content="2022-05-30" />
 
 <title>AFPT – Aerodynamic model</title>
 
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
+    border: none; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
@@ -48,9 +80,9 @@ pre.numberSource a.sourceLine::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  }
+  {   }
 @media screen {
-a.sourceLine::before { text-decoration: underline; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -106,6 +138,29 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </script>
 
 
+
+<style type="text/css">
+/* for pandoc --citeproc since 2.11 */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
 
 <style type="text/css">body {
 background-color: #fff;
@@ -301,86 +356,159 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">AFPT – Aerodynamic model</h1>
 <h4 class="author">Marco Klein Heerenbrink</h4>
-<h4 class="date">2020-03-18</h4>
+<h4 class="date">2022-05-30</h4>
 
 
 
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(<span class="st">&#39;afpt&#39;</span>)</a></code></pre></div>
-<p>This document describes the aerodynamic model that this package uses for estimating flight performance of flapping flight <span class="citation">(see also Klein Heerenbrink <em>et al.</em>, 2015)</span>. The model first calculates the drag of the bird when it is not flapping its wings (i.e. it is not producing thrust). Then factors are computed that adjust the non-flapping drag for the effect of flapping the wings at a specified frequency (and strokeplane angle).</p>
-<p>The process described here is performed by the function <code>computeFlappingPower()</code>. We first define a bird:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">myBird &lt;-<span class="st"> </span><span class="kw">Bird</span>(</a>
-<a class="sourceLine" id="cb2-2" title="2">  <span class="dt">massTotal =</span> <span class="fl">0.215</span>, </a>
-<a class="sourceLine" id="cb2-3" title="3">  <span class="dt">wingSpan =</span> <span class="fl">0.67</span>, </a>
-<a class="sourceLine" id="cb2-4" title="4">  <span class="dt">wingArea =</span> <span class="fl">0.0652</span>,</a>
-<a class="sourceLine" id="cb2-5" title="5">  <span class="dt">name =</span> <span class="st">&#39;Jackdaw&#39;</span>,</a>
-<a class="sourceLine" id="cb2-6" title="6">  <span class="dt">name.scientific =</span> <span class="st">&#39;Corvus monedula&#39;</span>,</a>
-<a class="sourceLine" id="cb2-7" title="7">  <span class="dt">type =</span> <span class="st">&#39;passerine&#39;</span>,</a>
-<a class="sourceLine" id="cb2-8" title="8">  <span class="dt">source =</span> <span class="st">&#39;KleinHeerenbrink M, Warfvinge K and Hedenström A 2016 J.Exp.Biol. 219: 10, 1572--1581&#39;</span></a>
-<a class="sourceLine" id="cb2-9" title="9">)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&#39;afpt&#39;</span>)</span></code></pre></div>
+<p>This document describes the aerodynamic model that this package uses
+for estimating flight performance of flapping flight <span class="citation">(see also Klein Heerenbrink <em>et al.</em>,
+2015)</span>. The model first calculates the drag of the bird when it is
+not flapping its wings (i.e. it is not producing thrust). Then factors
+are computed that adjust the non-flapping drag for the effect of
+flapping the wings at a specified frequency (and strokeplane angle).</p>
+<p>The process described here is performed by the function
+<code>computeFlappingPower()</code>. We first define a bird:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>myBird <span class="ot">&lt;-</span> <span class="fu">Bird</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">massTotal =</span> <span class="fl">0.215</span>, </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">wingSpan =</span> <span class="fl">0.67</span>, </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">wingArea =</span> <span class="fl">0.0652</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&#39;Jackdaw&#39;</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">name.scientific =</span> <span class="st">&#39;Corvus monedula&#39;</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&#39;passerine&#39;</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">source =</span> <span class="st">&#39;KleinHeerenbrink M, Warfvinge K and Hedenström A 2016 J.Exp.Biol. 219: 10, 1572--1581&#39;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 <p>Compute powercurve for a range of airspeeds:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">speed &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">6</span>,<span class="dv">18</span>,<span class="dt">length.out=</span><span class="dv">6</span>) <span class="co">#  airspeed in m/s</span></a>
-<a class="sourceLine" id="cb3-2" title="2">powercurve &lt;-<span class="st"> </span><span class="kw">computeFlappingPower</span>(myBird,speed)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>speed <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">6</span>,<span class="dv">18</span>,<span class="at">length.out=</span><span class="dv">6</span>) <span class="co">#  airspeed in m/s</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>powercurve <span class="ot">&lt;-</span> <span class="fu">computeFlappingPower</span>(myBird,speed)</span></code></pre></div>
 <div id="non-flapping-drag-components" class="section level2">
 <h2>Non-flapping drag components</h2>
 <p>The aerodynamic model assumes 4 distinct sources of drag:</p>
 <ul>
-<li><p>Induced drag: <span class="math display">\[ D^\prime_\mathrm{ind} = \frac{L^2}{q \pi b^2} ,\]</span> where <span class="math inline">\(q = \frac{1}{2} \rho U^2\)</span>.</p></li>
-<li><p>Zero lift profile drag: <span class="math display">\[ D^\prime_\mathrm{pro,0} = q C_{D_\mathrm{pro,0}} S,\]</span></p></li>
-<li><p>Lift dependent profile drag: <span class="math display">\[ D^\prime_\mathrm{pro,2} = k_\mathrm{p}\frac{L^2}{q S},\]</span></p></li>
-<li><p>Parasite drag: any other forces that act on the wings as external sources of drag, e.g.:</p>
+<li><p>Induced drag: <span class="math display">\[ D^\prime_\mathrm{ind}
+= \frac{L^2}{q \pi b^2} ,\]</span> where <span class="math inline">\(q =
+\frac{1}{2} \rho U^2\)</span>.</p></li>
+<li><p>Zero lift profile drag: <span class="math display">\[
+D^\prime_\mathrm{pro,0} = q C_{D_\mathrm{pro,0}} S,\]</span></p></li>
+<li><p>Lift dependent profile drag: <span class="math display">\[
+D^\prime_\mathrm{pro,2} = k_\mathrm{p}\frac{L^2}{q S},\]</span></p></li>
+<li><p>Parasite drag: any other forces that act on the wings as external
+sources of drag, e.g.:</p>
 <ul>
-<li>body drag <span class="math display">\[ D^\prime_\mathrm{body} = q C_{D_\mathrm{b}} S_\mathrm{b},\]</span></li>
+<li>body drag <span class="math display">\[ D^\prime_\mathrm{body} = q
+C_{D_\mathrm{b}} S_\mathrm{b},\]</span></li>
 <li>drag from feet, carried objects, etc.,</li>
-<li>apparent drag due to climbing <span class="math display">\[ D^\prime_\mathrm{climb} = W \sin(\gamma) ,\]</span> with <span class="math inline">\(\gamma\)</span> the climb angle.</li>
+<li>apparent drag due to climbing <span class="math display">\[
+D^\prime_\mathrm{climb} = W \sin(\gamma) ,\]</span> with <span class="math inline">\(\gamma\)</span> the climb angle.</li>
 </ul></li>
 </ul>
-<p>Some of the variables used here are relatively easy to measure on a bird in a standardized way <span class="citation">(see Pennycuick, 2008)</span>:</p>
+<p>Some of the variables used here are relatively easy to measure on a
+bird in a standardized way <span class="citation">(see Pennycuick,
+2008)</span>:</p>
 <ul>
-<li><span class="math inline">\(m\)</span> body mass (in steady flight <span class="math inline">\(L = W = m g\)</span>, with <span class="math inline">\(g\)</span> the gravitational acceleration)</li>
+<li><span class="math inline">\(m\)</span> body mass (in steady flight
+<span class="math inline">\(L = W = m g\)</span>, with <span class="math inline">\(g\)</span> the gravitational acceleration)</li>
 <li><span class="math inline">\(b\)</span> wing span</li>
 <li><span class="math inline">\(S\)</span> wing area</li>
 </ul>
 <p>which we used to construct <code>myBird</code>.</p>
-<p>The coefficients <span class="math inline">\(C_{D_\mathrm{pro,0}}\)</span>, <span class="math inline">\(k_\mathrm{p}\)</span> and <span class="math inline">\(C_{D_\mathrm{b}}\)</span> are more difficult to determine, and the literature on this subject offers a wide range of possibilities. For these coefficients, the <code>Bird()</code> constructor assumes default values, which were used for the computation of the <code>powercurve</code> above. The default settings return in the following non-flapping drag components:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw">par</span>(<span class="dt">mar=</span><span class="kw">c</span>(<span class="fl">3.1</span>,<span class="fl">3.1</span>,<span class="fl">0.4</span>,<span class="fl">1.1</span>),<span class="dt">mgp=</span><span class="kw">c</span>(<span class="fl">1.9</span>,<span class="fl">0.7</span>,<span class="fl">0.0</span>),<span class="dt">cex=</span><span class="fl">0.75</span>)</a>
-<a class="sourceLine" id="cb4-2" title="2"><span class="kw">with</span>(powercurve , <span class="kw">plot</span>( speed, Dnf.ind<span class="op">+</span>Dnf.pro0<span class="op">+</span>Dnf.pro2<span class="op">+</span>Dnf.par, </a>
-<a class="sourceLine" id="cb4-3" title="3">                        <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">15</span>, <span class="dt">col=</span><span class="st">&#39;grey20&#39;</span>, </a>
-<a class="sourceLine" id="cb4-4" title="4">                        <span class="dt">xlab=</span><span class="ot">NA</span>, <span class="dt">ylab=</span><span class="ot">NA</span>, <span class="dt">xlim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">20</span>), <span class="dt">ylim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="fl">0.39</span>)))</a>
-<a class="sourceLine" id="cb4-5" title="5"><span class="kw">with</span>(powercurve , <span class="kw">lines</span>( speed, Dnf.ind, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">21</span>, <span class="dt">col=</span><span class="st">&#39;red3&#39;</span>))</a>
-<a class="sourceLine" id="cb4-6" title="6"><span class="kw">with</span>(powercurve , <span class="kw">lines</span>( speed, Dnf.pro0, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">22</span>, <span class="dt">col=</span><span class="st">&#39;green3&#39;</span>))</a>
-<a class="sourceLine" id="cb4-7" title="7"><span class="kw">with</span>(powercurve , <span class="kw">lines</span>( speed, Dnf.pro2, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">23</span>, <span class="dt">col=</span><span class="st">&#39;blue3&#39;</span>))</a>
-<a class="sourceLine" id="cb4-8" title="8"><span class="kw">with</span>(powercurve , <span class="kw">lines</span>( speed, Dnf.par, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">24</span>, <span class="dt">col=</span><span class="st">&#39;yellow3&#39;</span>))</a>
-<a class="sourceLine" id="cb4-9" title="9"><span class="kw">mtext</span>(<span class="dt">side =</span> <span class="dv">1</span>, <span class="dt">line =</span> <span class="dv">2</span>,<span class="st">&#39;Airspeed (m/s)&#39;</span>)</a>
-<a class="sourceLine" id="cb4-10" title="10"><span class="kw">mtext</span>(<span class="dt">side =</span> <span class="dv">2</span>, <span class="dt">line =</span> <span class="dv">2</span>,<span class="st">&#39;Drag components (N)&#39;</span>)</a></code></pre></div>
+<p>The coefficients <span class="math inline">\(C_{D_\mathrm{pro,0}}\)</span>, <span class="math inline">\(k_\mathrm{p}\)</span> and <span class="math inline">\(C_{D_\mathrm{b}}\)</span> are more difficult to
+determine, and the literature on this subject offers a wide range of
+possibilities. For these coefficients, the <code>Bird()</code>
+constructor assumes default values, which were used for the computation
+of the <code>powercurve</code> above. The default settings return in the
+following non-flapping drag components:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="fl">3.1</span>,<span class="fl">3.1</span>,<span class="fl">0.4</span>,<span class="fl">1.1</span>),<span class="at">mgp=</span><span class="fu">c</span>(<span class="fl">1.9</span>,<span class="fl">0.7</span>,<span class="fl">0.0</span>),<span class="at">cex=</span><span class="fl">0.75</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(powercurve , <span class="fu">plot</span>( speed, Dnf.ind<span class="sc">+</span>Dnf.pro0<span class="sc">+</span>Dnf.pro2<span class="sc">+</span>Dnf.par, </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">15</span>, <span class="at">col=</span><span class="st">&#39;grey20&#39;</span>, </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">xlab=</span><span class="cn">NA</span>, <span class="at">ylab=</span><span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">20</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="fl">0.39</span>)))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(powercurve , <span class="fu">lines</span>( speed, Dnf.ind, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">21</span>, <span class="at">col=</span><span class="st">&#39;red3&#39;</span>))</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(powercurve , <span class="fu">lines</span>( speed, Dnf.pro0, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">22</span>, <span class="at">col=</span><span class="st">&#39;green3&#39;</span>))</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(powercurve , <span class="fu">lines</span>( speed, Dnf.pro2, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">23</span>, <span class="at">col=</span><span class="st">&#39;blue3&#39;</span>))</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(powercurve , <span class="fu">lines</span>( speed, Dnf.par, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">24</span>, <span class="at">col=</span><span class="st">&#39;yellow3&#39;</span>))</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="at">side =</span> <span class="dv">1</span>, <span class="at">line =</span> <span class="dv">2</span>,<span class="st">&#39;Airspeed (m/s)&#39;</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">line =</span> <span class="dv">2</span>,<span class="st">&#39;Drag components (N)&#39;</span>)</span></code></pre></div>
 <div class="figure">
-<img src="data:image/png;base64,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" alt="Drag components – Black: total drag; red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag; yellow triangles: parasitic drag." />
-<p class="caption"><strong>Drag components</strong> – Black: total drag; red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag; yellow triangles: parasitic drag.</p>
+<img src="data:image/png;base64,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" alt />
+<p class="caption"><strong>Drag components</strong> – Black: total drag;
+red circles: induced drag; green squares: zero-lift profile drag; blue
+diamonds: lift-dep. profile drag; yellow triangles: parasitic drag.</p>
 </div>
 <div id="zero-lift-profile-drag" class="section level3">
 <h3>Zero lift profile drag</h3>
-<p>In this model we assume the zero lift profile drag is caused by the friction of a laminar boundary layer over the aerofoil. Specifically the model uses <span class="math display">\[ C_{D_\mathrm{pro,0}} = \frac{2.66}{\sqrt{Re_c}}, \]</span> where <span class="math inline">\(Re_c\)</span> is the Reynolds number for the mean chord length <span class="math inline">\(c\)</span> at air speed <span class="math inline">\(U\)</span> with kinematic viscosity <span class="math inline">\(\nu\)</span>: <span class="math display">\[ Re_c = \frac{U c}{\nu}.\]</span> This is the solution for a flat plate laminar boundary layer in a paralel flow. At large Reynolds numbers, the laminar boundary layer may transition to a turbulent boundary layer somewhere along the aerofoil <span class="citation">(Anderson, 2007)</span>, however, this typically occurs at higher Reynolds numbers than those experienced by birds.</p>
+<p>In this model we assume the zero lift profile drag is caused by the
+friction of a laminar boundary layer over the aerofoil. Specifically the
+model uses <span class="math display">\[ C_{D_\mathrm{pro,0}} =
+\frac{2.66}{\sqrt{Re_c}}, \]</span> where <span class="math inline">\(Re_c\)</span> is the Reynolds number for the mean
+chord length <span class="math inline">\(c\)</span> at air speed <span class="math inline">\(U\)</span> with kinematic viscosity <span class="math inline">\(\nu\)</span>: <span class="math display">\[ Re_c =
+\frac{U c}{\nu}.\]</span> This is the solution for a flat plate laminar
+boundary layer in a paralel flow. At large Reynolds numbers, the laminar
+boundary layer may transition to a turbulent boundary layer somewhere
+along the aerofoil <span class="citation">(Anderson, 2007)</span>,
+however, this typically occurs at higher Reynolds numbers than those
+experienced by birds.</p>
 </div>
 <div id="lift-dependent-drag-coefficient" class="section level3">
 <h3>Lift dependent drag coefficient</h3>
-<p>The coefficient for lift-dependent profile drag, <span class="math inline">\(k_\mathrm{p}\)</span> indicates how efficient the aerofoil cross-section (note: not the wing) is at producing lift. For an aerofoil at low Reynolds number, <span class="math inline">\(k_\mathrm{p}\)</span> can be relatively high (<span class="citation">Spedding and McArthur (2010)</span>). At higher Reynolds numbers (i.e. large bird and/or high flight speed) this factor tends to decrease. Additionally, birds with very high wing loading also usually have highly cambered aerofoils. This has the effect that the minimum profile drag for the aerofoil is shifted towards a higher lift coefficient. If a bird has only a narrow range of speeds at which it flies, there is good reason for the aerofoil to be optimized for this specific condition. In that case a value <span class="math inline">\(k_\mathrm{p} = 0\)</span> may be more appropriate.</p>
-<p>The <code>Bird()</code> constructor will by default assume <span class="math inline">\(k_\mathrm{p}=0.03\)</span>. Custom values can be set by providing the numeric argument <code>coef.profileDragLiftFactor</code> to the function (or by reassigning this property in the bird object).</p>
+<p>The coefficient for lift-dependent profile drag, <span class="math inline">\(k_\mathrm{p}\)</span> indicates how efficient the
+aerofoil cross-section (note: not the wing) is at producing lift. For an
+aerofoil at low Reynolds number, <span class="math inline">\(k_\mathrm{p}\)</span> can be relatively high
+(<span class="citation">Spedding and McArthur (2010)</span>). At higher
+Reynolds numbers (i.e. large bird and/or high flight speed) this factor
+tends to decrease. Additionally, birds with very high wing loading also
+usually have highly cambered aerofoils. This has the effect that the
+minimum profile drag for the aerofoil is shifted towards a higher lift
+coefficient. If a bird has only a narrow range of speeds at which it
+flies, there is good reason for the aerofoil to be optimized for this
+specific condition. In that case a value <span class="math inline">\(k_\mathrm{p} = 0\)</span> may be more
+appropriate.</p>
+<p>The <code>Bird()</code> constructor will by default assume <span class="math inline">\(k_\mathrm{p}=0.03\)</span>. Custom values can be
+set by providing the numeric argument
+<code>coef.profileDragLiftFactor</code> to the function (or by
+reassigning this property in the bird object).</p>
 </div>
 <div id="body-drag-coefficient" class="section level3">
 <h3>Body drag coefficient</h3>
-<p>The body drag coefficient has turned out to be a difficult parameter to obtain for birds. Early wind tunnel experiments with frozen bird bodies, resulted in values between 0.2 and 0.4, e.g. <span class="citation">Pennycuick <em>et al.</em> (1988)</span>. <span class="citation">Tucker (1990)</span> showed these wind tunnel measurements suffered from interference drag of the mounting strut. An even broader range of values was obtained from radar trackings of diving passerines by <span class="citation">Hedenström and Liechti (2001)</span>. Additionally, the applicability of this paramter also depends on the used reference area <span class="math inline">\(S_\mathrm{b}\)</span>. <span class="citation">Pennycuick <em>et al.</em> (1988)</span> found the relationship <span class="math inline">\(S_\mathrm{b} = 0.00813 m^{0.666}\)</span> with body mass for waterfowl and raptors, whereas <span class="citation">Hedenström and Rosén (2003)</span> found a relationship <span class="math inline">\(S_\mathrm{b} = 0.0129 m^{0.614}\)</span> for passerines.</p>
-<p>The default value for body drag coefficient is <span class="math inline">\(C_{D_\mathrm{b}} = 0.2\)</span>. This seems to be a recurring value in experiments, e.g. <span class="citation">Henningsson and Hedenström (2011)</span> and <span class="citation">KleinHeerenbrink <em>et al.</em> (2016)</span>. The default body frontal area is determined based on the body mass relationship of <span class="citation">Hedenström and Rosén (2003)</span> in case of <code>type=&quot;passerine&quot;</code> or the body mass relationship of <span class="citation">Pennycuick <em>et al.</em> (1988)</span> for <code>type=&quot;other&quot;</code>.</p>
-<p>Both body frontal area and the body drag coefficient can be customized, either by specification in the <code>Bird()</code> constructor, or by reassignment in the bird object. Here it should be kept in mind that the body drag coefficient needs to match the body frontal area.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">with</span>(myBird,coef.bodyDragCoefficient<span class="op">*</span>bodyFrontalArea)</a></code></pre></div>
+<p>The body drag coefficient has turned out to be a difficult parameter
+to obtain for birds. Early wind tunnel experiments with frozen bird
+bodies, resulted in values between 0.2 and 0.4, e.g. <span class="citation">Pennycuick <em>et al.</em> (1988)</span>. <span class="citation">Tucker (1990)</span> showed these wind tunnel
+measurements suffered from interference drag of the mounting strut. An
+even broader range of values was obtained from radar trackings of diving
+passerines by <span class="citation">Hedenström and Liechti
+(2001)</span>. Additionally, the applicability of this paramter also
+depends on the used reference area <span class="math inline">\(S_\mathrm{b}\)</span>. <span class="citation">Pennycuick <em>et al.</em> (1988)</span> found the
+relationship <span class="math inline">\(S_\mathrm{b} = 0.00813
+m^{0.666}\)</span> with body mass for waterfowl and raptors, whereas
+<span class="citation">Hedenström and Rosén (2003)</span> found a
+relationship <span class="math inline">\(S_\mathrm{b} = 0.0129
+m^{0.614}\)</span> for passerines.</p>
+<p>The default value for body drag coefficient is <span class="math inline">\(C_{D_\mathrm{b}} = 0.2\)</span>. This seems to be
+a recurring value in experiments, e.g. <span class="citation">Henningsson and Hedenström (2011)</span> and <span class="citation">KleinHeerenbrink <em>et al.</em> (2016)</span>. The
+default body frontal area is determined based on the body mass
+relationship of <span class="citation">Hedenström and Rosén
+(2003)</span> in case of <code>type=&quot;passerine&quot;</code> or the body mass
+relationship of <span class="citation">Pennycuick <em>et al.</em>
+(1988)</span> for <code>type=&quot;other&quot;</code>.</p>
+<p>Both body frontal area and the body drag coefficient can be
+customized, either by specification in the <code>Bird()</code>
+constructor, or by reassignment in the bird object. Here it should be
+kept in mind that the body drag coefficient needs to match the body
+frontal area.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(myBird,coef.bodyDragCoefficient<span class="sc">*</span>bodyFrontalArea)</span></code></pre></div>
 <pre><code>## [1] 0.001004007</code></pre>
-<p>In some literature, values for the product <span class="math inline">\(C_{D_\mathrm{b}}S_\mathrm{b}\)</span> can be found. This convention can be accomodated as:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">myBird<span class="op">$</span>coef.bodyDragCoefficient &lt;-<span class="st"> </span><span class="fl">0.001004007</span> <span class="co">#  the product CDb*Sb</span></a>
-<a class="sourceLine" id="cb7-2" title="2">myBird<span class="op">$</span>bodyFrontalArea &lt;-<span class="st"> </span><span class="dv">1</span> <span class="co">#  unit area</span></a>
-<a class="sourceLine" id="cb7-3" title="3"><span class="kw">with</span>(myBird,coef.bodyDragCoefficient<span class="op">*</span>bodyFrontalArea)</a></code></pre></div>
+<p>In some literature, values for the product <span class="math inline">\(C_{D_\mathrm{b}}S_\mathrm{b}\)</span> can be
+found. This convention can be accomodated as:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>myBird<span class="sc">$</span>coef.bodyDragCoefficient <span class="ot">&lt;-</span> <span class="fl">0.001004007</span> <span class="co">#  the product CDb*Sb</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>myBird<span class="sc">$</span>bodyFrontalArea <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co">#  unit area</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(myBird,coef.bodyDragCoefficient<span class="sc">*</span>bodyFrontalArea)</span></code></pre></div>
 <pre><code>## [1] 0.001004007</code></pre>
-<p>Alternatively, some literature provides body drag coefficients relative to the wing reference area. This convention has the advantage that all drag coefficients can be added as a measure of total drag. This convention can be accomodated as:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1">myBird<span class="op">$</span>coef.bodyDragCoefficient &lt;-<span class="st"> </span><span class="fl">0.01539888</span> <span class="co">#  CDb relative to wing reference area</span></a>
-<a class="sourceLine" id="cb9-2" title="2">myBird<span class="op">$</span>bodyFrontalArea &lt;-<span class="st"> </span>myBird<span class="op">$</span>wingArea <span class="co">#  unit area</span></a>
-<a class="sourceLine" id="cb9-3" title="3"><span class="kw">with</span>(myBird,coef.bodyDragCoefficient<span class="op">*</span>bodyFrontalArea)</a></code></pre></div>
+<p>Alternatively, some literature provides body drag coefficients
+relative to the wing reference area. This convention has the advantage
+that all drag coefficients can be added as a measure of total drag. This
+convention can be accomodated as:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>myBird<span class="sc">$</span>coef.bodyDragCoefficient <span class="ot">&lt;-</span> <span class="fl">0.01539888</span> <span class="co">#  CDb relative to wing reference area</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>myBird<span class="sc">$</span>bodyFrontalArea <span class="ot">&lt;-</span> myBird<span class="sc">$</span>wingArea <span class="co">#  unit area</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(myBird,coef.bodyDragCoefficient<span class="sc">*</span>bodyFrontalArea)</span></code></pre></div>
 <pre><code>## [1] 0.001004007</code></pre>
 </div>
 </div>
@@ -388,9 +516,21 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h2>Flapping model</h2>
 <div id="wingbeat-frequency-strokeplane-angle-and-amplitude" class="section level3">
 <h3>Wingbeat frequency, strokeplane angle and amplitude</h3>
-<p>In the numerical computations on which this model is based <span class="citation">(Klein Heerenbrink <em>et al.</em>, 2015)</span>, the wingbeat amplitude was optimized to produce minimum induced power for a given wingbeat frequency and strokeplane angle. This means that the wingbeat amplitude is an output, not an input, of the model. The strokeplane angle is by default optimized by <code>computeFlappingPower()</code>, but it can also be provided as an input. Wingbeat frequency is purely an input to the flight model. Generally, a optimum wingbeat frequency for which aerodynamic power is minimum, does not exist within the typical range of wingbeat frequencies used by the bird.</p>
-<p>All three wingbeat parameters are returned by the <code>computeFlappingPower()</code> function. For this example, the strokeplane angle has been optimized to minimize aerodynamic power. Frequency is the default reference frequency of the bird.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1">powercurve[<span class="kw">c</span>(<span class="st">&#39;speed&#39;</span>,<span class="st">&#39;amplitude&#39;</span>,<span class="st">&#39;strokeplane&#39;</span>,<span class="st">&#39;frequency&#39;</span>)]</a></code></pre></div>
+<p>In the numerical computations on which this model is based <span class="citation">(Klein Heerenbrink <em>et al.</em>, 2015)</span>, the
+wingbeat amplitude was optimized to produce minimum induced power for a
+given wingbeat frequency and strokeplane angle. This means that the
+wingbeat amplitude is an output, not an input, of the model. The
+strokeplane angle is by default optimized by
+<code>computeFlappingPower()</code>, but it can also be provided as an
+input. Wingbeat frequency is purely an input to the flight model.
+Generally, a optimum wingbeat frequency for which aerodynamic power is
+minimum, does not exist within the typical range of wingbeat frequencies
+used by the bird.</p>
+<p>All three wingbeat parameters are returned by the
+<code>computeFlappingPower()</code> function. For this example, the
+strokeplane angle has been optimized to minimize aerodynamic power.
+Frequency is the default reference frequency of the bird.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>powercurve[<span class="fu">c</span>(<span class="st">&#39;speed&#39;</span>,<span class="st">&#39;amplitude&#39;</span>,<span class="st">&#39;strokeplane&#39;</span>,<span class="st">&#39;frequency&#39;</span>)]</span></code></pre></div>
 <pre><code>##   speed amplitude strokeplane frequency
 ## 1   6.0  38.19161 39.30489438  5.948083
 ## 2   8.4  34.39946 26.56562747  5.948083
@@ -401,65 +541,122 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </div>
 <div id="upstroke-wing-flexion" class="section level3">
 <h3>Upstroke wing flexion</h3>
-<p>Most vertebrates flex their wings during the upstroke. In the model, the degree of flexion is linked to the wingbeat amplitude <span class="math inline">\(\theta\)</span>: <span class="math display">\[ \frac{b_\mathrm{u.s.}}{b} = \cos (\theta).\]</span> This formulation ensures that there is no wing flexion when the bird is not flapping its wings. For small wingbeat amplitudes, it results in that the wing tips are raised following a nearly straight trajectory. Alternative upstroke flexion models are to be investigated in future work.</p>
+<p>Most vertebrates flex their wings during the upstroke. In the model,
+the degree of flexion is linked to the wingbeat amplitude <span class="math inline">\(\theta\)</span>: <span class="math display">\[
+\frac{b_\mathrm{u.s.}}{b} = \cos (\theta).\]</span> This formulation
+ensures that there is no wing flexion when the bird is not flapping its
+wings. For small wingbeat amplitudes, it results in that the wing tips
+are raised following a nearly straight trajectory. Alternative upstroke
+flexion models are to be investigated in future work.</p>
 </div>
 <div id="thrust-requirement" class="section level3">
 <h3>Thrust requirement</h3>
-<p>The drag components in flapping flight can be obtained by multiplying the non-flapping components with a factor that depends on the wingbeat kinematics: <span class="math display">\[ D_i = k_{D_i} D^\prime_i,\]</span> using <span class="math inline">\(i\)</span> for each drag component. The factors <span class="math inline">\(k_{D_i}\)</span> scale with the thrust requirement <span class="math inline">\({T}/{L}\)</span>, the ratio between thrust and lift: <span class="math display">\[ k_{D_i} = 1 + f_{D_i}(k_f,\phi) \frac{T}{L},\]</span> where <span class="math inline">\(f_{D_i}(k_f,\phi)\)</span> is a specific function for each of the drag components, depending on strokeplane angle <span class="math inline">\(\phi\)</span> and the reduced frequency <span class="math inline">\(k_f = 2\pi f b / U\)</span> ( <span class="math inline">\(f\)</span> being the wingbeat frequency). The parasitic drag terms are assumed to be independent of wingbeat, i.e. <span class="math inline">\(f_{D_\mathrm{par}}=0\)</span>. The values of <span class="math inline">\(f_{D_\mathrm{ind}}\)</span>, <span class="math inline">\(f_{D_\mathrm{pro,0}}\)</span> and <span class="math inline">\(f_{D_\mathrm{pro,2}}\)</span>, are computed using <code>fD.ind(kf,phi)</code>, <code>fD.pro0(kf,phi)</code> and <code>fD.pro2(kf,phi)</code>:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw">par</span>(<span class="dt">mar=</span><span class="kw">c</span>(<span class="fl">3.1</span>,<span class="fl">3.1</span>,<span class="fl">0.4</span>,<span class="fl">1.1</span>),<span class="dt">mgp=</span><span class="kw">c</span>(<span class="fl">1.9</span>,<span class="fl">0.7</span>,<span class="fl">0.0</span>),<span class="dt">cex=</span><span class="fl">0.75</span>)</a>
-<a class="sourceLine" id="cb13-2" title="2">kf &lt;-<span class="st"> </span><span class="dv">2</span><span class="op">*</span>pi<span class="op">*</span>myBird<span class="op">$</span>wingSpan<span class="op">*</span>myBird<span class="op">$</span>wingbeatFrequency <span class="op">/</span><span class="st"> </span>speed <span class="co">#  reduced frequency</span></a>
-<a class="sourceLine" id="cb13-3" title="3">phi &lt;-<span class="st"> </span>powercurve<span class="op">$</span>strokeplane<span class="op">*</span>pi<span class="op">/</span><span class="dv">180</span> <span class="co">#  strokeplane angle in radians (optimized)</span></a>
-<a class="sourceLine" id="cb13-4" title="4">fD &lt;-<span class="st"> </span><span class="kw">data.frame</span>(</a>
-<a class="sourceLine" id="cb13-5" title="5">  <span class="dt">ind =</span> <span class="kw">fD.ind</span>(kf,phi), <span class="co">#  induced drag</span></a>
-<a class="sourceLine" id="cb13-6" title="6">  <span class="dt">pro0 =</span> <span class="kw">fD.pro0</span>(kf,phi), <span class="co">#  zero lift profile drag</span></a>
-<a class="sourceLine" id="cb13-7" title="7">  <span class="dt">pro2 =</span> <span class="kw">fD.pro2</span>(kf,phi), <span class="co">#  lift dep. profile drag</span></a>
-<a class="sourceLine" id="cb13-8" title="8">  <span class="dt">par =</span> <span class="dv">0</span> <span class="co"># parasitic drag is wingbeat independent</span></a>
-<a class="sourceLine" id="cb13-9" title="9">)</a>
-<a class="sourceLine" id="cb13-10" title="10"><span class="kw">plot</span>( speed, fD<span class="op">$</span>ind, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">21</span>, <span class="dt">col=</span><span class="st">&#39;red3&#39;</span>, </a>
-<a class="sourceLine" id="cb13-11" title="11">      <span class="dt">xlab=</span><span class="ot">NA</span>, <span class="dt">ylab=</span><span class="ot">NA</span>, <span class="dt">xlim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">20</span>), <span class="dt">ylim=</span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>,<span class="fl">6.6</span>))</a>
-<a class="sourceLine" id="cb13-12" title="12"><span class="kw">lines</span>( speed, fD<span class="op">$</span>pro0, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">22</span>, <span class="dt">col=</span><span class="st">&#39;green3&#39;</span>)</a>
-<a class="sourceLine" id="cb13-13" title="13"><span class="kw">lines</span>( speed, fD<span class="op">$</span>pro2, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">23</span>, <span class="dt">col=</span><span class="st">&#39;blue3&#39;</span>)</a>
-<a class="sourceLine" id="cb13-14" title="14"><span class="kw">mtext</span>(<span class="dt">side =</span> <span class="dv">1</span>, <span class="dt">line =</span> <span class="dv">2</span>,<span class="st">&#39;Airspeed (m/s)&#39;</span>)</a>
-<a class="sourceLine" id="cb13-15" title="15"><span class="kw">mtext</span>(<span class="dt">side =</span> <span class="dv">2</span>, <span class="dt">line =</span> <span class="dv">2</span>,<span class="st">&#39;Drag factors fD (-)&#39;</span>)</a></code></pre></div>
-<p><img src="data:image/png;base64,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" alt="Drag factors – red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag." /> Note how the factors for the lift dependent components increase with speed, whereas the <span class="math inline">\(f_{D_\mathrm{pro,0}}\)</span> decreases and even takes negative values.</p>
-<p>The thrust required for steady flight, needs to balance the total drag in flapping flight: <span class="math display">\[ T = {\sum k_{D_i} D^\prime_i}\]</span> This means the thrust itself depends on the thrust requirement: <span class="math display">\[ T = {\sum D^\prime_i} + {\sum f_{D,i} D^\prime_i}\frac{T}{L} ,\]</span> but because of the linear form of <span class="math inline">\(k_D\)</span>, this equation is easily solved: <span class="math display">\[ \frac{T}{L} = \frac{\sum D^\prime_i}{L - \sum f_{D,i} D^\prime_i} \]</span></p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">thrustratio &lt;-<span class="st"> </span><span class="kw">apply</span>(powercurve[,<span class="kw">grep</span>(<span class="st">&#39;Dnf&#39;</span>,<span class="kw">names</span>(powercurve))],<span class="dv">1</span>,sum) <span class="op">/</span></a>
-<a class="sourceLine" id="cb14-2" title="2"><span class="st">  </span>(powercurve<span class="op">$</span>L <span class="op">-</span><span class="st"> </span><span class="kw">apply</span>(fD<span class="op">*</span>powercurve[,<span class="kw">grep</span>(<span class="st">&#39;Dnf&#39;</span>,<span class="kw">names</span>(powercurve))],<span class="dv">1</span>,sum))</a></code></pre></div>
-<p>With the thrust ratio known, we could explicitly compute the drag factors <span class="math inline">\(k_{D_i}\)</span>, but unless we are going to measure the drag components empirically, this is not very usefull. However, as described in the next section, the power components also depend on this thrust ratio.</p>
+<p>The drag components in flapping flight can be obtained by multiplying
+the non-flapping components with a factor that depends on the wingbeat
+kinematics: <span class="math display">\[ D_i = k_{D_i}
+D^\prime_i,\]</span> using <span class="math inline">\(i\)</span> for
+each drag component. The factors <span class="math inline">\(k_{D_i}\)</span> scale with the thrust requirement
+<span class="math inline">\({T}/{L}\)</span>, the ratio between thrust
+and lift: <span class="math display">\[ k_{D_i} = 1 + f_{D_i}(k_f,\phi)
+\frac{T}{L},\]</span> where <span class="math inline">\(f_{D_i}(k_f,\phi)\)</span> is a specific function
+for each of the drag components, depending on strokeplane angle <span class="math inline">\(\phi\)</span> and the reduced frequency <span class="math inline">\(k_f = 2\pi f b / U\)</span> ( <span class="math inline">\(f\)</span> being the wingbeat frequency). The
+parasitic drag terms are assumed to be independent of wingbeat,
+i.e. <span class="math inline">\(f_{D_\mathrm{par}}=0\)</span>. The
+values of <span class="math inline">\(f_{D_\mathrm{ind}}\)</span>, <span class="math inline">\(f_{D_\mathrm{pro,0}}\)</span> and <span class="math inline">\(f_{D_\mathrm{pro,2}}\)</span>, are computed using
+<code>fD.ind(kf,phi)</code>, <code>fD.pro0(kf,phi)</code> and
+<code>fD.pro2(kf,phi)</code>:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="fl">3.1</span>,<span class="fl">3.1</span>,<span class="fl">0.4</span>,<span class="fl">1.1</span>),<span class="at">mgp=</span><span class="fu">c</span>(<span class="fl">1.9</span>,<span class="fl">0.7</span>,<span class="fl">0.0</span>),<span class="at">cex=</span><span class="fl">0.75</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>kf <span class="ot">&lt;-</span> <span class="dv">2</span><span class="sc">*</span>pi<span class="sc">*</span>myBird<span class="sc">$</span>wingSpan<span class="sc">*</span>myBird<span class="sc">$</span>wingbeatFrequency <span class="sc">/</span> speed <span class="co">#  reduced frequency</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>phi <span class="ot">&lt;-</span> powercurve<span class="sc">$</span>strokeplane<span class="sc">*</span>pi<span class="sc">/</span><span class="dv">180</span> <span class="co">#  strokeplane angle in radians (optimized)</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>fD <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">ind =</span> <span class="fu">fD.ind</span>(kf,phi), <span class="co">#  induced drag</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">pro0 =</span> <span class="fu">fD.pro0</span>(kf,phi), <span class="co">#  zero lift profile drag</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">pro2 =</span> <span class="fu">fD.pro2</span>(kf,phi), <span class="co">#  lift dep. profile drag</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">par =</span> <span class="dv">0</span> <span class="co"># parasitic drag is wingbeat independent</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( speed, fD<span class="sc">$</span>ind, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">21</span>, <span class="at">col=</span><span class="st">&#39;red3&#39;</span>, </span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">xlab=</span><span class="cn">NA</span>, <span class="at">ylab=</span><span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">20</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="fl">6.6</span>))</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( speed, fD<span class="sc">$</span>pro0, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">22</span>, <span class="at">col=</span><span class="st">&#39;green3&#39;</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( speed, fD<span class="sc">$</span>pro2, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">23</span>, <span class="at">col=</span><span class="st">&#39;blue3&#39;</span>)</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="at">side =</span> <span class="dv">1</span>, <span class="at">line =</span> <span class="dv">2</span>,<span class="st">&#39;Airspeed (m/s)&#39;</span>)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">line =</span> <span class="dv">2</span>,<span class="st">&#39;Drag factors fD (-)&#39;</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" alt="Drag factors – red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag." />
+Note how the factors for the lift dependent components increase with
+speed, whereas the <span class="math inline">\(f_{D_\mathrm{pro,0}}\)</span> decreases and even
+takes negative values.</p>
+<p>The thrust required for steady flight, needs to balance the total
+drag in flapping flight: <span class="math display">\[ T = {\sum k_{D_i}
+D^\prime_i}\]</span> This means the thrust itself depends on the thrust
+requirement: <span class="math display">\[ T = {\sum D^\prime_i} + {\sum
+f_{D,i} D^\prime_i}\frac{T}{L} ,\]</span> but because of the linear form
+of <span class="math inline">\(k_D\)</span>, this equation is easily
+solved: <span class="math display">\[ \frac{T}{L} = \frac{\sum
+D^\prime_i}{L - \sum f_{D,i} D^\prime_i} \]</span></p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>thrustratio <span class="ot">&lt;-</span> <span class="fu">apply</span>(powercurve[,<span class="fu">grep</span>(<span class="st">&#39;Dnf&#39;</span>,<span class="fu">names</span>(powercurve))],<span class="dv">1</span>,sum) <span class="sc">/</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  (powercurve<span class="sc">$</span>L <span class="sc">-</span> <span class="fu">apply</span>(fD<span class="sc">*</span>powercurve[,<span class="fu">grep</span>(<span class="st">&#39;Dnf&#39;</span>,<span class="fu">names</span>(powercurve))],<span class="dv">1</span>,sum))</span></code></pre></div>
+<p>With the thrust ratio known, we could explicitly compute the drag
+factors <span class="math inline">\(k_{D_i}\)</span>, but unless we are
+going to measure the drag components empirically, this is not very
+usefull. However, as described in the next section, the power components
+also depend on this thrust ratio.</p>
 </div>
 <div id="aerodynamic-power-of-flapping-flight" class="section level3">
 <h3>Aerodynamic power of flapping flight</h3>
-<p>Mechanical power is the rate of energy related with exerting a force onto a moving object; mathematically <span class="math inline">\(P=\mathbf{F}\cdot\mathbf{V}\)</span>. Aerodynamic power of flight can therefore be expressed as the product of thrust and airspeed <span class="math inline">\(P = T U\)</span>. However, because the bird is flapping its wings, producing variable aerodynamic forces throughout the wingbeat, the aerodynamic power for flapping flight needs to be modified. The required correction is very similar to that used for the drag in flapping flight: <span class="math display">\[ P = \sum k_{P_i} D^\prime_i U,\]</span> where <span class="math display">\[ k_{P_i} = 1 = f_{P_i} (k_f,\phi) \frac{T}{L}.\]</span> We again assume the parasitic drag components are independent of the wingbeat: <span class="math inline">\(f_{P_\mathrm{par}}=0\)</span>. The values of <span class="math inline">\(f_{P_\mathrm{ind}}\)</span>, <span class="math inline">\(f_{P_\mathrm{pro,0}}\)</span> and <span class="math inline">\(f_{P_\mathrm{pro,2}}\)</span>, are computed using <code>fP.ind(kf,phi)</code>, <code>fP.pro0(kf,phi)</code> and <code>fP.pro2(kf,phi)</code>:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1">fP &lt;-<span class="st"> </span><span class="kw">data.frame</span>(</a>
-<a class="sourceLine" id="cb15-2" title="2">  <span class="dt">ind =</span> <span class="kw">fP.ind</span>(kf,phi), <span class="co">#  induced power</span></a>
-<a class="sourceLine" id="cb15-3" title="3">  <span class="dt">pro0 =</span> <span class="kw">fP.pro0</span>(kf,phi), <span class="co">#  zero lift profile power</span></a>
-<a class="sourceLine" id="cb15-4" title="4">  <span class="dt">pro2 =</span> <span class="kw">fP.pro2</span>(kf,phi), <span class="co">#  lift dep. profile power</span></a>
-<a class="sourceLine" id="cb15-5" title="5">  <span class="dt">par =</span> <span class="dv">0</span> <span class="co">#  parasitic power is wingbeat independent</span></a>
-<a class="sourceLine" id="cb15-6" title="6">)</a></code></pre></div>
-<p>As can be seen below, the general behaviour of <span class="math inline">\(f_{P_i}\)</span> is rather similar to <span class="math inline">\(f_{D_i}\)</span>, except for that the lift dependent factors are significantly raised. Combined with the required thrust ratio, we can also look at the power factors <span class="math inline">\(k_{P_i}\)</span>:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">kP &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>fP<span class="op">*</span>thrustratio</a></code></pre></div>
-<p>Note that the factors <span class="math inline">\(k_{D_i}\)</span> and <span class="math inline">\(k_{P_i}\)</span> are also returned in the output of <code>computeFlappingPower()</code>.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="kw">par</span>(<span class="dt">mar=</span><span class="kw">c</span>(<span class="fl">3.1</span>,<span class="fl">3.1</span>,<span class="fl">0.4</span>,<span class="fl">1.1</span>),<span class="dt">mgp=</span><span class="kw">c</span>(<span class="fl">1.9</span>,<span class="fl">0.7</span>,<span class="fl">0.0</span>),<span class="dt">cex=</span><span class="fl">0.75</span>)</a>
-<a class="sourceLine" id="cb17-2" title="2"><span class="kw">plot</span>( speed, fP<span class="op">$</span>ind, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">21</span>, <span class="dt">col=</span><span class="st">&#39;red3&#39;</span>, </a>
-<a class="sourceLine" id="cb17-3" title="3">      <span class="dt">xlab=</span><span class="ot">NA</span>, <span class="dt">ylab=</span><span class="ot">NA</span>, <span class="dt">xlim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">20</span>), <span class="dt">ylim=</span><span class="kw">c</span>(<span class="op">-</span><span class="fl">0.4</span>,<span class="dv">8</span>))</a>
-<a class="sourceLine" id="cb17-4" title="4"><span class="kw">lines</span>( speed, fP<span class="op">$</span>pro0, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">22</span>, <span class="dt">col=</span><span class="st">&#39;green3&#39;</span>)</a>
-<a class="sourceLine" id="cb17-5" title="5"><span class="kw">lines</span>( speed, fP<span class="op">$</span>pro2, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">23</span>, <span class="dt">col=</span><span class="st">&#39;blue3&#39;</span>)</a>
-<a class="sourceLine" id="cb17-6" title="6"><span class="kw">mtext</span>(<span class="dt">side =</span> <span class="dv">1</span>, <span class="dt">line =</span> <span class="dv">2</span>,<span class="st">&#39;Airspeed (m/s)&#39;</span>)</a>
-<a class="sourceLine" id="cb17-7" title="7"><span class="kw">mtext</span>(<span class="dt">side =</span> <span class="dv">2</span>, <span class="dt">line =</span> <span class="dv">2</span>,<span class="st">&#39;Power factors fP (-)&#39;</span>)</a>
-<a class="sourceLine" id="cb17-8" title="8"></a>
-<a class="sourceLine" id="cb17-9" title="9"><span class="kw">plot</span>( speed, kP<span class="op">$</span>ind, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">21</span>, <span class="dt">col=</span><span class="st">&#39;red3&#39;</span>, </a>
-<a class="sourceLine" id="cb17-10" title="10">      <span class="dt">xlab=</span><span class="ot">NA</span>, <span class="dt">ylab=</span><span class="ot">NA</span>, <span class="dt">xlim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">20</span>), <span class="dt">ylim=</span><span class="kw">c</span>(<span class="fl">0.8</span>,<span class="fl">2.3</span>))</a>
-<a class="sourceLine" id="cb17-11" title="11"><span class="kw">lines</span>( speed, kP<span class="op">$</span>pro0, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">22</span>, <span class="dt">col=</span><span class="st">&#39;green3&#39;</span>)</a>
-<a class="sourceLine" id="cb17-12" title="12"><span class="kw">lines</span>( speed, kP<span class="op">$</span>pro2, <span class="dt">type=</span><span class="st">&#39;b&#39;</span>, <span class="dt">pch=</span><span class="dv">23</span>, <span class="dt">col=</span><span class="st">&#39;blue3&#39;</span>)</a>
-<a class="sourceLine" id="cb17-13" title="13"><span class="kw">mtext</span>(<span class="dt">side =</span> <span class="dv">1</span>, <span class="dt">line =</span> <span class="dv">2</span>,<span class="st">&#39;Airspeed (m/s)&#39;</span>)</a>
-<a class="sourceLine" id="cb17-14" title="14"><span class="kw">mtext</span>(<span class="dt">side =</span> <span class="dv">2</span>, <span class="dt">line =</span> <span class="dv">2</span>,<span class="st">&#39;Power factors kP (-)&#39;</span>)</a></code></pre></div>
+<p>Mechanical power is the rate of energy related with exerting a force
+onto a moving object; mathematically <span class="math inline">\(P=\mathbf{F}\cdot\mathbf{V}\)</span>. Aerodynamic
+power of flight can therefore be expressed as the product of thrust and
+airspeed <span class="math inline">\(P = T U\)</span>. However, because
+the bird is flapping its wings, producing variable aerodynamic forces
+throughout the wingbeat, the aerodynamic power for flapping flight needs
+to be modified. The required correction is very similar to that used for
+the drag in flapping flight: <span class="math display">\[ P = \sum
+k_{P_i} D^\prime_i U,\]</span> where <span class="math display">\[
+k_{P_i} = 1 = f_{P_i} (k_f,\phi) \frac{T}{L}.\]</span> We again assume
+the parasitic drag components are independent of the wingbeat: <span class="math inline">\(f_{P_\mathrm{par}}=0\)</span>. The values of <span class="math inline">\(f_{P_\mathrm{ind}}\)</span>, <span class="math inline">\(f_{P_\mathrm{pro,0}}\)</span> and <span class="math inline">\(f_{P_\mathrm{pro,2}}\)</span>, are computed using
+<code>fP.ind(kf,phi)</code>, <code>fP.pro0(kf,phi)</code> and
+<code>fP.pro2(kf,phi)</code>:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fP <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">ind =</span> <span class="fu">fP.ind</span>(kf,phi), <span class="co">#  induced power</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">pro0 =</span> <span class="fu">fP.pro0</span>(kf,phi), <span class="co">#  zero lift profile power</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">pro2 =</span> <span class="fu">fP.pro2</span>(kf,phi), <span class="co">#  lift dep. profile power</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">par =</span> <span class="dv">0</span> <span class="co">#  parasitic power is wingbeat independent</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>As can be seen below, the general behaviour of <span class="math inline">\(f_{P_i}\)</span> is rather similar to <span class="math inline">\(f_{D_i}\)</span>, except for that the lift
+dependent factors are significantly raised. Combined with the required
+thrust ratio, we can also look at the power factors <span class="math inline">\(k_{P_i}\)</span>:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>kP <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">+</span> fP<span class="sc">*</span>thrustratio</span></code></pre></div>
+<p>Note that the factors <span class="math inline">\(k_{D_i}\)</span>
+and <span class="math inline">\(k_{P_i}\)</span> are also returned in
+the output of <code>computeFlappingPower()</code>.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="fl">3.1</span>,<span class="fl">3.1</span>,<span class="fl">0.4</span>,<span class="fl">1.1</span>),<span class="at">mgp=</span><span class="fu">c</span>(<span class="fl">1.9</span>,<span class="fl">0.7</span>,<span class="fl">0.0</span>),<span class="at">cex=</span><span class="fl">0.75</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( speed, fP<span class="sc">$</span>ind, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">21</span>, <span class="at">col=</span><span class="st">&#39;red3&#39;</span>, </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">xlab=</span><span class="cn">NA</span>, <span class="at">ylab=</span><span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">20</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.4</span>,<span class="dv">8</span>))</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( speed, fP<span class="sc">$</span>pro0, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">22</span>, <span class="at">col=</span><span class="st">&#39;green3&#39;</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( speed, fP<span class="sc">$</span>pro2, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">23</span>, <span class="at">col=</span><span class="st">&#39;blue3&#39;</span>)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="at">side =</span> <span class="dv">1</span>, <span class="at">line =</span> <span class="dv">2</span>,<span class="st">&#39;Airspeed (m/s)&#39;</span>)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">line =</span> <span class="dv">2</span>,<span class="st">&#39;Power factors fP (-)&#39;</span>)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( speed, kP<span class="sc">$</span>ind, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">21</span>, <span class="at">col=</span><span class="st">&#39;red3&#39;</span>, </span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">xlab=</span><span class="cn">NA</span>, <span class="at">ylab=</span><span class="cn">NA</span>, <span class="at">xlim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">20</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="fl">0.8</span>,<span class="fl">2.3</span>))</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( speed, kP<span class="sc">$</span>pro0, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">22</span>, <span class="at">col=</span><span class="st">&#39;green3&#39;</span>)</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( speed, kP<span class="sc">$</span>pro2, <span class="at">type=</span><span class="st">&#39;b&#39;</span>, <span class="at">pch=</span><span class="dv">23</span>, <span class="at">col=</span><span class="st">&#39;blue3&#39;</span>)</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="at">side =</span> <span class="dv">1</span>, <span class="at">line =</span> <span class="dv">2</span>,<span class="st">&#39;Airspeed (m/s)&#39;</span>)</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">line =</span> <span class="dv">2</span>,<span class="st">&#39;Power factors kP (-)&#39;</span>)</span></code></pre></div>
 <p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUsAAAEgCAMAAAAKWqE1AAAAeFBMVEUAAAAAADoAAGYAAM0AOjoAOpAAZrYAzQA6AAA6ADo6AGY6OpA6kNtmAABmADpmAGZmZjpmkJBmtrZmtttmtv+QOgCQOjqQOmaQkGaQtpCQ2/+2ZgC225C2/7a2///NAADbkDrb25Db////tmb/25D//7b//9v///+wRVW/AAAACXBIWXMAAA7DAAAOwwHHb6hkAAALdElEQVR4nO2dCXukNhJA2/a6cSbuye4GZxOzO8O6D/7/PwwSV9PoKKAkVUG9L2F6PC1g3hS6kQ6VgMUh9Q1sCHGJh7jEQ1ziMcvlQRixyuWcL28fcYmHuMRDXOIhLvEQl3hAXV7eDsfycHj+AfnyTgG6vP3xWZXHWumvX/4v7xWgy+tvP6ryvfm1GirpgW+OGRKXeMzIL98lv3Qj5Tge4hIPcQnj58+f3u+ISxA/2/+diEsQ4hIPcYmI5JdxEZde/AHZIi59gFWKSw+AbLJHXDqZYVJcurlT+eL/trh0MKh8eQHIFJdW7rLKl/7gQlzamD7fPpni0sKo1JG4XMFjVegFUviISxPTqpCUPQsx1SqlTrSI6fMNQ1w+YsgqgYjLBx6fb7hKcfnACpXi0s0cleKyxzQKMUuluOwwjY7NUykuOwwuZ6oUlx1Tl3NVisueh/zyZbZKcWlhvklxaWGJSnGpmFSGFqkUl6Zh22UqxaWxr3IZe3e5urFzx75dmmZlLFa5b5cL+89t7NilcarQCpU7dolVeg/s1aWpIrRWptHluX3dMZ+ZmA3m0hvf5fV0ODafbx8P7+z5EnPBVnqvlDlx2b6J2zL+nS8xDxwVoXUy95dfmqenBonL9tfbx/v8xJwBzbB0syOXvld0gtWJHl1e3vK6KDq8fpm+zALHq2OrLTYAXd4+8qrIWa9rYHeJpBLqsi7P1TIRnNfbsLrEUgkux+ugPNd2z0fIl2lizi8XjJHZANcvCx2Ix/GX0W4jGXgmd9PusZXgmCr30R63VoZQVe6i3WOtVuKq3IFLe1Aiq9y+y1hBWW3epb3ZiK9y4y7tDfAAKrftMq5Kk8sSUBsyJ6aF4/kOotLgsnz6VL1CSxKTInJQVgaXTadGOe5cAyYmhKOvMpRKQ3v8pELy7G48WhLTwdHrG0zlNl1agjKcxYYturT2ngeWuUWXZl6q0JG5KZfO0TGMUVs3BpfDfjQ+ocRcOhdWRJlN4GZL7R73IpX6GY8dl/n1++eyxInxLPiZoux55+rSN5sgep1IN8d55pcOQmvUmPJLjnEZeHoLiG2UPZ5nO47KbbikEJTVJlyGnr4Ghr9Lz9Kp8VSyd+kLyogqzS7rOqaqGnn7g9O7pBOUlcVl8fp1eTtWxdGQwJU4Nr5FpuOqNNcvT3l1PuT+zqLELn0mI6u0uixqjyVpl8SCsrI948fr6fXreqL8jPtWPo+v0lb2HJ4+bx8+lQldepfjT6CSaZ3IazKFSqNL0Ls9psRUSGLSXvYsShweyJZEqVRa5liDRs4SuARtlZUMc1xS7Qv2uUwVkQ28yp7UIzpueLn0j4CnKcEbzC4vb/UT/uQdqaBVjkcYAXdjeb9Hzxuk9X6Pv8yhGJdd/dI7CTOiS9C+YwTzy65+SaifCFgRoleO04tLwhX0Ozjkl5TbOvcwKMdhOSUByNcvQUFJQqVzDsyk7Ll8+zH5cmDYBGXldnk3RmFuood3yUmlwWUxzHO768a8nmqLfVxGWrsEWKmkAnye2/X0+v+4zzioUklH5ayy5/L2HNMlKCgJqbS4LOpa+vngHakI6ZLZ862wzduo1EOdcEyX2/OtYNIeN0JMpbs9nsIlaHRMQ02l+RlvWuKXN1+GGcAleHSMVKnTQK09DnVJzyS99jjQJUWV5FzSnk3gxjY3i+b4OFWLDbb6ZXkELGAS32XiER035vrle3Wuq+t0xig6Uo80urHV1VWX0GN3pTdxaJKPgLux1dVVXxE5lwzjUjd4ineCzzi//FJNWFdluXfmoJTjI8jVLxkzcUl3jQjKIakxuCS6RgR5lYZnnOYaEXRL7wH42BkgcTgYmORS9rBQycMlD5UcXHLIKjX0XXIx6R47m504BHxUUn+Hj83zraD9Dh8nk7a4JFJX56WSdNnDTCVhl6yySo3ZZf2Uv34VSee5sTNpK3uePku1dkmCOTAdDFVa65dqfCLNmjocLTbY6pfKZZI5g6RHdNy44rJIMHYWfkX5cDjyyyTv8IVfUT4c1nI8zZxB4rMJ3FCrX9KeTeCGmsutlT3DjrozE6PAVqVz/qU3w5S5BiMcz7h+BXJWYgQyDf55Y2BzqUIzRVxm/YEfRpfqNQpId7C4HGEue9L1q2f9gR/W93sgJbm4HGEte0rARrBS9oyAluN1pKqi6Ppb3DUiWGF+J2Uydnb7yJtp7OLSjqXd81gdahwWx9Zl8PU2smBnDgiwPa7isqb8x7dIcZmFO3UwrOX4Q1W9Hfwpo62pkwU8dyDMfcEE1nPLAp47EK65WWnf78lCnjwIrrlZidfbyIKePQB045KfTLL5pSILfH5koOU4KDE2WeDzI0NuvGdEFvoCqNB2yUumwaV68Qw2yTpCezwLfwk0DO/w1fmkf6kNY+IQZBGugcTEZVMh8laHjIlDkEW4BhITl01FHTb7P0qfWxbjIijQd8lHJgOXbGRycMlFJguXTGQaXBJc1yCLdaFVEG/3dGTRrrQCJi5ZyOTikoNMNi4ZyBSXePBxSV8mI5fkZXJySR1xiYe4xIOXS9ozXZm57A8UEZd4iEs8mLmU/BIfkkKZuiRpk61LgjYZuyRnk7VLYjaZuyRlk71LQjY34JKMzU24JGJzIy41qVtFm3LZH9IgLvEQl3hs0mWiTHNTLoeyJ0khtCWXD0T3CXWp3+p7nJFJ26Xizmf4GhPQZbtGhN4a1vtlYrQGh0MogC679V9irV0SgKw/hGIHcdmS9YdQQPPLdho7t/zyjmw4BMo2N1yOPzAqeyblEEbJtB+XU0Zy+8Ny9uxSg1jK795lS9YfliMuG7LhYMg3YbmpuGwY28qyh9/3Bxfi0kU2KzcVlxCy/uBCXELI+oMLcQlByp7YiEs8xCUe4hIPcYmHuMRjnUthxBqXq5PhJE96cUdycYmXXFziJReXeMnFJV5ycYmXXFziJZfqNx7iEg9xiYe4xENc4rHE5fV0AC3HbqE8wHacNXJRG7AtvwGdfOkNqLnSuePqC1yquZklbMNyIwVswwYjZyVh+Q3o5Etv4Pr9s7r88mm/+gKXaq7w5dvSwKpuf3j3trFSPP1VX3jxDTTJl97AWQkscvvVF7i8/Pql/40WomfJLg5N9bdYcQMq+ZobqC9rv/oCl2re9QqX9WOyIjaVjBU3oP8plt+A2rzDfvX4calZnGcixOXyG9CbZqLG5cr8UrPK5YobWOWy2ZkHNb9Ugb6iHFfPyO0/a+pEK26gyyKW3EC7yZH96mnql/5t6mwg1S+X3ECpx8ty1PqlYEFc4iEu8RCXeIhLPMQlHuISDwouC73NdL8NOpxzV03sXtEeUC29hrXNXTgEXF5++efCruHe5bQdch5+cl7TsJgDAZfl839hW9BO6FwaIvquvT0N2kCkd3n7ONb/VY2R6/c/D88/9MIpeR2wf9Uf9POv2m+TD09/ti7VLoKXt3+f6j9qxxFUn1p7FugGt+tJ71IFl9ofuXF5qv/euhPhfMhrGbn6tWr3T36/+1DU+s5ds7o4qp4HdR41BlE+62657ix3WUFg0rssVN+q6hhsXL4Pm1VqaSqq9E/Vj/sPTZ9N0UhquhXfhkOussthy0vgLtarSe6yEabCrHGpB/oaDY2DOqqawKp/O3zQ3zh3LvP2y/2hyPuztK4jkNxl2c79zgeXdRba5pdKlXLZfaf/UN67HGtUBz0E0Z5lPy6bYqf+6x7vXCrq53dw2WV4wwd3XPa1y6LJiPfhsrNTFypjl/Wn9vFX+WXe/7D50Dz+5Si/vHPZ1y4HzRFI7bJo6yu1t96l9lsfdNHcl+M6xkYfHsrxO5fF3Vl2U44PIVM8/6+PS5Ut6srPv97akex+2sr9h4f65eDydz1i255lT/VLO+Bn092Sn9/OX8gmXLpHJffUHrcCd+lqcu+qn2gz/A2U2U9o8at9qQAAAABJRU5ErkJggg==" alt="Power factors – red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag." /><img src="data:image/png;base64,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" alt="Power factors – red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag." /></p>
 </div>
 </div>
 <div id="model-limits" class="section level2">
 <h2>Model limits</h2>
-<p>The functions <span class="math inline">\(f_{D_i}\)</span> and <span class="math inline">\(f_{P_i}\)</span> are somewhat arbitrary polynomial functions that were fitted to a set of numerically obtained data. These data points were computed for a range of thrust ratios <span class="math inline">\(0\leq T/L \leq 0.3\)</span>, reduced frequencies <span class="math inline">\(1 \leq k_f \leq 6\)</span> and strokeplane angles <span class="math inline">\(0 \leq \phi \leq 50^\circ\)</span>. The functions are a good representation within these limits, but as the fitting functions do not have a physical basis, they should not be used for extrapolations outside these limits. For this reason, <code>computeFlappingPower()</code> returns several flags:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1">powercurve[,<span class="kw">grep</span>(<span class="st">&#39;flags&#39;</span>,<span class="kw">names</span>(powercurve))]</a></code></pre></div>
+<p>The functions <span class="math inline">\(f_{D_i}\)</span> and <span class="math inline">\(f_{P_i}\)</span> are somewhat arbitrary polynomial
+functions that were fitted to a set of numerically obtained data. These
+data points were computed for a range of thrust ratios <span class="math inline">\(0\leq T/L \leq 0.3\)</span>, reduced frequencies
+<span class="math inline">\(1 \leq k_f \leq 6\)</span> and strokeplane
+angles <span class="math inline">\(0 \leq \phi \leq 50^\circ\)</span>.
+The functions are a good representation within these limits, but as the
+fitting functions do not have a physical basis, they should not be used
+for extrapolations outside these limits. For this reason,
+<code>computeFlappingPower()</code> returns several flags:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>powercurve[,<span class="fu">grep</span>(<span class="st">&#39;flags&#39;</span>,<span class="fu">names</span>(powercurve))]</span></code></pre></div>
 <pre><code>##   flags.redFreqLo flags.redFreqHi flags.thrustHi flags.speedLo
 ## 1           FALSE           FALSE          FALSE         FALSE
 ## 2           FALSE           FALSE          FALSE         FALSE
@@ -467,40 +664,67 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## 4           FALSE           FALSE          FALSE         FALSE
 ## 5           FALSE           FALSE          FALSE         FALSE
 ## 6           FALSE           FALSE          FALSE         FALSE</code></pre>
-<p>These indicate low reduced frequency, high reduced frequency, high thrust requirement and low speed, respectively. The first four relate to the range of the numerical data set. The limits for strokeplane angle are not flagged, as these are either provided as input by the user, or limited by the optimization algorithm. The last flag, low speed, relates to the validity of the non-flapping drag model. Below this speed the downwash required to produce lift becomes large compared to the forward flight speed, so that it needs to be taken into account as the airspeed experienced by the bird (note that the expression for induced drag goes to infinity at zero flight speed).</p>
+<p>These indicate low reduced frequency, high reduced frequency, high
+thrust requirement and low speed, respectively. The first four relate to
+the range of the numerical data set. The limits for strokeplane angle
+are not flagged, as these are either provided as input by the user, or
+limited by the optimization algorithm. The last flag, low speed, relates
+to the validity of the non-flapping drag model. Below this speed the
+downwash required to produce lift becomes large compared to the forward
+flight speed, so that it needs to be taken into account as the airspeed
+experienced by the bird (note that the expression for induced drag goes
+to infinity at zero flight speed).</p>
 </div>
 <div id="references" class="section level2 unnumbered">
-<h2>References</h2>
-<div id="refs" class="references">
-<div id="ref-Anderson2007">
-<p><strong>Anderson JDJ</strong>. 2007. <em>Fundamentals of Aerodynamics</em>. New York: McGraw-Hill Education.</p>
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body">
+<div id="ref-Anderson2007" class="csl-entry">
+<strong>Anderson JDJr</strong>. 2007. <em><span class="nocase">Fundamentals of Aerodynamics</span></em>. New York:
+McGraw-Hill Education.
 </div>
-<div id="ref-Hedenstrom2001a">
-<p><strong>Hedenström A, Liechti F</strong>. 2001. Field estimates of body drag coefficient on the basis of dives in passerine birds. J. Exp. Biol. <strong>204</strong>, 1167–75.</p>
+<div id="ref-Hedenstrom2001a" class="csl-entry">
+<strong>Hedenström A, Liechti F</strong>. 2001. <a href="https://doi.org/10.1242/jeb.204.6.1167"><span class="nocase">Field
+estimates of body drag coefficient on the basis of dives in passerine
+birds.</span></a> J. Exp. Biol. <strong>204</strong>, 1167–75.
 </div>
-<div id="ref-Hedenstrom2003">
-<p><strong>Hedenström A, Rosén M</strong>. 2003. Body frontal area in passerine birds. J. Avian Biol. <strong>34</strong>, 159–162.</p>
+<div id="ref-Hedenstrom2003" class="csl-entry">
+<strong>Hedenström A, Rosén M</strong>. 2003. <a href="https://doi.org/10.1034/j.1600-048X.2003.03145.x"><span class="nocase">Body frontal area in passerine birds</span></a>. J. Avian
+Biol. <strong>34</strong>, 159–162.
 </div>
-<div id="ref-Henningsson2011">
-<p><strong>Henningsson P, Hedenström A</strong>. 2011. Aerodynamics of gliding flight in common swifts. J. Exp. Biol. <strong>214</strong>, 382–93.</p>
+<div id="ref-Henningsson2011" class="csl-entry">
+<strong>Henningsson P, Hedenström A</strong>. 2011. <a href="https://doi.org/10.1242/jeb.050609"><span class="nocase">Aerodynamics of gliding flight in common
+swifts.</span></a> J. Exp. Biol. <strong>214</strong>, 382–93.
 </div>
-<div id="ref-KleinHeerenbrink2015">
-<p><strong>Klein Heerenbrink M, Johansson LC, Hedenström A</strong>. 2015. Power of the wingbeat: modelling the effects of flapping wings in vertebrate flight. Proc. R. Soc. A <strong>471</strong>.</p>
+<div id="ref-KleinHeerenbrink2015" class="csl-entry">
+<strong>Klein Heerenbrink M, Johansson LC, Hedenström A</strong>. 2015.
+<a href="https://doi.org/10.1098/rspa.2014.0952"><span class="nocase">Power of the wingbeat: modelling the effects of flapping
+wings in vertebrate flight</span></a>. Proc. R. Soc. A
+<strong>471</strong>.
 </div>
-<div id="ref-KleinHeerenbrink2016">
-<p><strong>KleinHeerenbrink M, Warfvinge K, Hedenström A</strong>. 2016. Wake analysis of aerodynamic components for the glide envelope of a jackdaw ( Corvus monedula ). J. Exp. Biol. <strong>219</strong>, 1572–1581.</p>
+<div id="ref-KleinHeerenbrink2016" class="csl-entry">
+<strong>KleinHeerenbrink M, Warfvinge K, Hedenström A</strong>. 2016. <a href="https://doi.org/10.1242/jeb.132480"><span class="nocase">Wake
+analysis of aerodynamic components for the glide envelope of a jackdaw (
+Corvus monedula )</span></a>. J. Exp. Biol. <strong>219</strong>,
+1572–1581.
 </div>
-<div id="ref-Pennycuick2008">
-<p><strong>Pennycuick CJ</strong>. 2008. <em>Modelling the flying bird</em>. Amsterdam, The Netherlands: Elsevier.</p>
+<div id="ref-Pennycuick2008" class="csl-entry">
+<strong>Pennycuick CJ</strong>. 2008. <em><span class="nocase">Modelling
+the flying bird</span></em>. Amsterdam, The Netherlands: Elsevier.
 </div>
-<div id="ref-Pennycuick1988">
-<p><strong>Pennycuick CJ, Obrecht III HH, Fuller MR</strong>. 1988. Empirical estimates of body drag of large waterfowl and raptors. J. Exp. Biol. <strong>135</strong>, 253–264.</p>
+<div id="ref-Pennycuick1988" class="csl-entry">
+<strong>Pennycuick CJ, Obrecht III HH, Fuller MR</strong>. 1988. <a href="https://journals.biologists.com/jeb/article/135/1/253/5435/Empirical-Estimates-of-Body-Drag-of-Large"><span class="nocase">Empirical estimates of body drag of large waterfowl and
+raptors</span></a>. J. Exp. Biol. <strong>135</strong>, 253–264.
 </div>
-<div id="ref-Spedding2010">
-<p><strong>Spedding GR, McArthur J</strong>. 2010. Span Efficiencies of Wings at Low Reynolds Numbers. J. Aircr. <strong>47</strong>, 120–128.</p>
+<div id="ref-Spedding2010" class="csl-entry">
+<strong>Spedding GR, McArthur J</strong>. 2010. <a href="https://doi.org/10.2514/1.44247"><span class="nocase">Span
+Efficiencies of Wings at Low Reynolds Numbers</span></a>. J. Aircr.
+<strong>47</strong>, 120–128.
 </div>
-<div id="ref-Tucker1990a">
-<p><strong>Tucker VA</strong>. 1990. Body drag, feather drag and interference drag of the mounting strut in a peregrine falcon, Falco peregrinus. J. Exp. Biol. <strong>149</strong>, 449–468.</p>
+<div id="ref-Tucker1990a" class="csl-entry">
+<strong>Tucker VA</strong>. 1990. <span class="nocase">Body drag,
+feather drag and interference drag of the mounting strut in a peregrine
+falcon, Falco peregrinus</span>. J. Exp. Biol. <strong>149</strong>,
+449–468.
 </div>
 </div>
 </div>

@@ -12,34 +12,66 @@
 
 <meta name="author" content="Marco Klein Heerenbrink" />
 
-<meta name="date" content="2020-03-18" />
+<meta name="date" content="2022-05-30" />
 
 <title>AFPT Multiple Birds</title>
 
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
+    border: none; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
@@ -48,9 +80,9 @@ pre.numberSource a.sourceLine::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  }
+  {   }
 @media screen {
-a.sourceLine::before { text-decoration: underline; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -106,6 +138,29 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </script>
 
 
+
+<style type="text/css">
+/* for pandoc --citeproc since 2.11 */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
 
 <style type="text/css">body {
 background-color: #fff;
@@ -301,22 +356,28 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">AFPT Multiple Birds</h1>
 <h4 class="author">Marco Klein Heerenbrink</h4>
-<h4 class="date">2020-03-18</h4>
+<h4 class="date">2022-05-30</h4>
 
 
 
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(afpt)</a></code></pre></div>
-<p>In this example we will look at how to compute flight performance for a set of birds. We will use the birds described in <span class="citation">Hedenström and Alerstam (1992)</span>. The pacakge has limited capabilities for handling multiple birds in a <code>data.frame</code>. We first load the data set in the workspace. This prepared data set already has a format recognized by the bird constructor, and can therefore be used directly as <code>Bird(climbing_birds)</code>.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw">data</span>(climbing_birds) <span class="co">#  Load climbing bird data set</span></a>
-<a class="sourceLine" id="cb2-2" title="2"></a>
-<a class="sourceLine" id="cb2-3" title="3">climbing_birds &lt;-<span class="st"> </span>climbing_birds<span class="co">#[seq(1,15,3),]</span></a>
-<a class="sourceLine" id="cb2-4" title="4">myBirds &lt;-<span class="st"> </span><span class="kw">Bird</span>(climbing_birds)</a>
-<a class="sourceLine" id="cb2-5" title="5"></a>
-<a class="sourceLine" id="cb2-6" title="6">myBirds<span class="op">$</span>coef.profileDragLiftFactor[myBirds<span class="op">$</span>name<span class="op">==</span><span class="st">&#39;Mute swan&#39;</span>] =<span class="st"> </span><span class="dv">0</span> </a>
-<a class="sourceLine" id="cb2-7" title="7"><span class="co"># we have to assume that swans has specialized aerofoil, as it otherwise won&#39;t be able to fly</span></a>
-<a class="sourceLine" id="cb2-8" title="8"><span class="co"># this may be true for other birds too, and should be investigated further...</span></a>
-<a class="sourceLine" id="cb2-9" title="9"></a>
-<a class="sourceLine" id="cb2-10" title="10">myBirds[<span class="kw">c</span>(<span class="st">&#39;name&#39;</span>,<span class="st">&#39;massTotal&#39;</span>,<span class="st">&#39;wingSpan&#39;</span>,<span class="st">&#39;wingArea&#39;</span>,<span class="st">&#39;wingbeatFrequency&#39;</span>)]</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(afpt)</span></code></pre></div>
+<p>In this example we will look at how to compute flight performance for
+a set of birds. We will use the birds described in <span class="citation">Hedenström and Alerstam (1992)</span>. The pacakge has
+limited capabilities for handling multiple birds in a
+<code>data.frame</code>. We first load the data set in the workspace.
+This prepared data set already has a format recognized by the bird
+constructor, and can therefore be used directly as
+<code>Bird(climbing_birds)</code>.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(climbing_birds) <span class="co">#  Load climbing bird data set</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>climbing_birds <span class="ot">&lt;-</span> climbing_birds<span class="co">#[seq(1,15,3),]</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>myBirds <span class="ot">&lt;-</span> <span class="fu">Bird</span>(climbing_birds)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>myBirds<span class="sc">$</span>coef.profileDragLiftFactor[myBirds<span class="sc">$</span>name<span class="sc">==</span><span class="st">&#39;Mute swan&#39;</span>] <span class="ot">=</span> <span class="dv">0</span> </span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># we have to assume that swans has specialized aerofoil, as it otherwise won&#39;t be able to fly</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># this may be true for other birds too, and should be investigated further...</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>myBirds[<span class="fu">c</span>(<span class="st">&#39;name&#39;</span>,<span class="st">&#39;massTotal&#39;</span>,<span class="st">&#39;wingSpan&#39;</span>,<span class="st">&#39;wingArea&#39;</span>,<span class="st">&#39;wingbeatFrequency&#39;</span>)]</span></code></pre></div>
 <pre><code>##                  name massTotal wingSpan    wingArea wingbeatFrequency
 ## 1           Mute swan  10.56000     2.23 0.540532609               3.5
 ## 2       Greylag goose   3.57500     1.64 0.316423529               3.8
@@ -333,10 +394,11 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## 13              Swift   0.04070     0.45 0.015340909               6.8
 ## 14          Chaffinch   0.02204     0.26 0.012754717               9.8
 ## 15             Siskin   0.01140     0.21 0.007474576              11.2</code></pre>
-<p>As this data set was used in relation to climb performance, we will use the function <code>findMaximumClimbRate()</code>:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">myBirds<span class="op">$</span>powerAvailable &lt;-<span class="st"> </span><span class="kw">computeAvailablePower</span>(myBirds)</a>
-<a class="sourceLine" id="cb4-2" title="2">climbperf &lt;-<span class="st"> </span><span class="kw">findMaximumClimbRate</span>(myBirds,<span class="dt">maximumPower =</span> myBirds<span class="op">$</span>powerAvailable,<span class="dt">strokeplane=</span><span class="dv">20</span>)</a>
-<a class="sourceLine" id="cb4-3" title="3">climbperf[<span class="kw">c</span>(<span class="st">&#39;speed&#39;</span>,<span class="st">&#39;climbRate&#39;</span>,<span class="st">&#39;frequency&#39;</span>,<span class="st">&#39;amplitude&#39;</span>)]</a></code></pre></div>
+<p>As this data set was used in relation to climb performance, we will
+use the function <code>findMaximumClimbRate()</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>myBirds<span class="sc">$</span>powerAvailable <span class="ot">&lt;-</span> <span class="fu">computeAvailablePower</span>(myBirds)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>climbperf <span class="ot">&lt;-</span> <span class="fu">findMaximumClimbRate</span>(myBirds,<span class="at">maximumPower =</span> myBirds<span class="sc">$</span>powerAvailable,<span class="at">strokeplane=</span><span class="dv">20</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>climbperf[<span class="fu">c</span>(<span class="st">&#39;speed&#39;</span>,<span class="st">&#39;climbRate&#39;</span>,<span class="st">&#39;frequency&#39;</span>,<span class="st">&#39;amplitude&#39;</span>)]</span></code></pre></div>
 <pre><code>##        speed  climbRate frequency amplitude
 ## 1  17.437234 0.27598741       3.5  28.95810
 ## 2  16.085625 0.07381682       3.8  33.26917
@@ -353,14 +415,21 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## 13  7.277247 1.46502960       6.8  60.39518
 ## 14  7.546147 1.76797674       9.8  71.69574
 ## 15  5.013951 2.30762726      11.2  83.54983</code></pre>
-<p>Without prescribing an airspeed, this function searches for the airspeed that maximizes climbrate. Climbrate is computed by adding a component of the weight, <span class="math inline">\(W\sin\gamma\)</span>, to the drag (here <span class="math inline">\(W\)</span> is the weight, and <span class="math inline">\(\gamma\)</span> is the climb angle), and then finding the climb angle at which the aerodynamic power requirement matches the available power. This gives a slightly different result than the traditional method of converting the power margin at minimum power speed directly, because the propulsive efficiency depends on the thrust requirement. For comparison:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">minpower &lt;-<span class="st"> </span><span class="kw">findMinimumPowerSpeed</span>(myBirds,<span class="dt">strokeplane=</span><span class="dv">20</span>)</a>
-<a class="sourceLine" id="cb6-2" title="2">climbperf.trad &lt;-<span class="st"> </span><span class="kw">data.frame</span>( <span class="co"># compute traditional climb performance</span></a>
-<a class="sourceLine" id="cb6-3" title="3">  <span class="dt">speed =</span> minpower<span class="op">$</span>speed,</a>
-<a class="sourceLine" id="cb6-4" title="4">  <span class="dt">climbRate =</span> (myBirds<span class="op">$</span>powerAvailable<span class="op">-</span>minpower<span class="op">$</span>power)<span class="op">/</span>myBirds<span class="op">$</span>massTotal<span class="op">/</span><span class="fl">9.81</span></a>
-<a class="sourceLine" id="cb6-5" title="5">)</a>
-<a class="sourceLine" id="cb6-6" title="6"></a>
-<a class="sourceLine" id="cb6-7" title="7">climbperf[<span class="kw">c</span>(<span class="st">&#39;speed&#39;</span>,<span class="st">&#39;climbRate&#39;</span>)]<span class="op">/</span>climbperf.trad <span class="co"># compare</span></a></code></pre></div>
+<p>Without prescribing an airspeed, this function searches for the
+airspeed that maximizes climbrate. Climbrate is computed by adding a
+component of the weight, <span class="math inline">\(W\sin\gamma\)</span>, to the drag (here <span class="math inline">\(W\)</span> is the weight, and <span class="math inline">\(\gamma\)</span> is the climb angle), and then
+finding the climb angle at which the aerodynamic power requirement
+matches the available power. This gives a slightly different result than
+the traditional method of converting the power margin at minimum power
+speed directly, because the propulsive efficiency depends on the thrust
+requirement. For comparison:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>minpower <span class="ot">&lt;-</span> <span class="fu">findMinimumPowerSpeed</span>(myBirds,<span class="at">strokeplane=</span><span class="dv">20</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>climbperf.trad <span class="ot">&lt;-</span> <span class="fu">data.frame</span>( <span class="co"># compute traditional climb performance</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">speed =</span> minpower<span class="sc">$</span>speed,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">climbRate =</span> (myBirds<span class="sc">$</span>powerAvailable<span class="sc">-</span>minpower<span class="sc">$</span>power)<span class="sc">/</span>myBirds<span class="sc">$</span>massTotal<span class="sc">/</span><span class="fl">9.81</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>climbperf[<span class="fu">c</span>(<span class="st">&#39;speed&#39;</span>,<span class="st">&#39;climbRate&#39;</span>)]<span class="sc">/</span>climbperf.trad <span class="co"># compare</span></span></code></pre></div>
 <pre><code>##        speed climbRate
 ## 1  1.0187631 0.8421719
 ## 2  1.0050750 0.7932620
@@ -377,15 +446,17 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## 13 1.1547435 0.8160012
 ## 14 1.1989975 0.7780880
 ## 15 0.9010589 0.8540825</code></pre>
-<p>The climb performance of these birds was observed by radar tracking. The model can predict the maximum climbrate for these observed speeds:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">myBirds<span class="op">$</span>climbSpeed &lt;-<span class="st"> </span>climbing_birds<span class="op">$</span>climbSpeed <span class="co"># attach observed climb speeds to the bird data</span></a>
-<a class="sourceLine" id="cb8-2" title="2">climbperf2 &lt;-<span class="st"> </span><span class="kw">findMaximumClimbRate</span>(</a>
-<a class="sourceLine" id="cb8-3" title="3">  myBirds,<span class="kw">computeAvailablePower</span>(myBirds),</a>
-<a class="sourceLine" id="cb8-4" title="4">  <span class="dt">speed=</span>myBirds<span class="op">$</span>climbSpeed, <span class="co"># specify observed climb speeds</span></a>
-<a class="sourceLine" id="cb8-5" title="5">  <span class="dt">strokeplane=</span><span class="dv">20</span></a>
-<a class="sourceLine" id="cb8-6" title="6">)</a>
-<a class="sourceLine" id="cb8-7" title="7">                    </a>
-<a class="sourceLine" id="cb8-8" title="8">climbperf2[<span class="kw">c</span>(<span class="st">&#39;speed&#39;</span>,<span class="st">&#39;climbRate&#39;</span>,<span class="st">&#39;frequency&#39;</span>,<span class="st">&#39;amplitude&#39;</span>,<span class="st">&#39;strokeplane&#39;</span>)]</a></code></pre></div>
+<p>The climb performance of these birds was observed by radar tracking.
+The model can predict the maximum climbrate for these observed
+speeds:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>myBirds<span class="sc">$</span>climbSpeed <span class="ot">&lt;-</span> climbing_birds<span class="sc">$</span>climbSpeed <span class="co"># attach observed climb speeds to the bird data</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>climbperf2 <span class="ot">&lt;-</span> <span class="fu">findMaximumClimbRate</span>(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  myBirds,<span class="fu">computeAvailablePower</span>(myBirds),</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">speed=</span>myBirds<span class="sc">$</span>climbSpeed, <span class="co"># specify observed climb speeds</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">strokeplane=</span><span class="dv">20</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>                    </span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>climbperf2[<span class="fu">c</span>(<span class="st">&#39;speed&#39;</span>,<span class="st">&#39;climbRate&#39;</span>,<span class="st">&#39;frequency&#39;</span>,<span class="st">&#39;amplitude&#39;</span>,<span class="st">&#39;strokeplane&#39;</span>)]</span></code></pre></div>
 <pre><code>##    speed  climbRate frequency amplitude strokeplane
 ## 1   16.7 0.27277198       3.5  28.95211          20
 ## 2   15.9 0.07353519       3.8  33.26125          20
@@ -402,16 +473,29 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## 13  10.0 1.29593370       6.8  59.79491          20
 ## 14  11.2 1.39915854       9.8  70.73258          20
 ## 15  13.4 0.77087587      11.2  75.39675          20</code></pre>
-<p><img src="data:image/png;base64,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" alt="Climb performance predicted and observed – Black markers indicate observed climb performance; Red markers indicate predicted performance. Climb rate predicted and observed – Black markers indicate observed climb performance; Green markers indicate predicted climb performance at observed climb speed" /><img src="data:image/png;base64,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" alt="Climb performance predicted and observed – Black markers indicate observed climb performance; Red markers indicate predicted performance. Climb rate predicted and observed – Black markers indicate observed climb performance; Green markers indicate predicted climb performance at observed climb speed" /></p>
+<p><img src="data:image/png;base64,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" alt="Climb performance predicted and observed – Black markers indicate observed climb performance; Red markers indicate predicted performance. Climb rate predicted and observed – Black markers indicate observed climb performance; Green markers indicate predicted climb performance at observed climb speed" /><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUsAAAEgCAMAAAAKWqE1AAAAgVBMVEUAAAAAADoAAGYAOpAAZrYAzQA6AAA6ADo6AGY6OmY6OpA6ZrY6kNtmAABmADpmAGZmOgBmOpBmZjpmkJBmtrZmtttmtv+QOgCQOjqQOmaQZgCQkGaQtpCQ29uQ2/+2ZgC225C2/7a2///bkDrb///l5eX/tmb/25D//7b//9v///8jut7oAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAL6klEQVR4nO2dC3ujNhZAcWJn2jSe3Xa3zvQxYXcIfuj//8AiiYdk63EFFyHQPV+bIbYQcKI3QhSMwKJY+gQ2BLnEg1ziQS7xCHJZEBqTXIYE3j7kEg9yiQe5xINc4kEu8SCXeJBLPMglHuQSD3KJB7nEg1ziQS7xIJd4kEs8yCUe5BIPcokHucSDXOJBLvEgl3iQSzzIJR5JuTwcDsgxRiUll4f2f+vhHmaZpEVaLmuXywL/iLisymVNLsEcamcWJ5ch1O7D1UmrXJVLVnu+X5g1uazJZQDkEg9yiUcWLq//+sGux6J4/gQEHo/Ppa9yWha4S66TXX4BBB5PLi4vr58yfXoDjycPl8fd9z94unz99Acej1NVzbbhkrHbe7Fn56cfoMBj8bpMWuaK6nFyGURWLtu6x/IA4GR8/XHs4+GyonRJLoMgl3iQSzyycMn74oKnBfs9G3HZNNXf/DtPJg+X7Pr1w7vzZDJxCdl5MuQyFPtUF3IZiGOqC7kMxDE9g1wGQi4hOwOxT3Uhl8FYnZDLYMilf+e7b63jm+TSv/PDl5YA5NK/892X1umS5NK/892X5LLh3A6wnQJ3vvvWOvU0G5fXY7GX27d3fbjSu7POwTqVKheX+iwX/TffzhqNSlubPBeXU3bWIJeYLhm55Hd33lh1P9kSsLNOfci9vOQ/yufPy8uelfvAnXXsM1Yycnk9nppm0el+Vpt/Zx1yyaTLsvFYTXFZFOSS/yj31+Pz5/U4IY83X9UFuRQzC3Yft3efSrfLmpHLCTtrX4neuPnqc3F5PfpKSfvO2neiN563Szl3CObT5VJ2xnN3yYH5dLu0X3leLjn+3E4uNWbrj5PLvk30ONkSsLNC7XpwPiOXt3fvqIZ5ZwVyOfQhR+2sQC67dGmYAwzZWYFctr9fvjzOAYbsrOB4ENTx/NgWXb5MrXtqRi7bPO4d1TDvPEAuGVrd43Np/Mr78OgKXWLUPa4Lt61PsEWXGHUPuezyuOkhM8DOGuNcOnWt0OXonTVcLm0l6QiXCS0wunaXjlme0ZlvPlEsl+ksigmd59Y23wPWgRnl0l0irs4lM82/vL3L7fMzeH0ihxZElyktMAosL7u8HrBull2L9fLHuExogVGgS8x0ac+WY1wmtPggtB5v25wY5aVrInsWLkE7azhc2vb0lX3k8nE3S/PaWydvy2XAulnhlzjSZTJdS7PLpnR8/iy9o0XoLkdEmbrL8+6j4nMGfTKRXXr71it0yccvG5fT5rLOcYWGKFNaYNQ2rs5dTptjHc9lKjJd6bIcGuYj1s0il0p5WanPQ4avm0Uu+3q8KHbajYrgdbPiuExGJFumrT6aFbrskuAa6p74Lu0NN5fLNbSJort0dCgeXZZFT+y2uo80XFo7uq50CYjXAbmkuseHfWBwrjnWuNfYlvdJuLQPWBtdNh2eas8uL5PWLkG8xq68T8KlfcDU3B9/Ezd2Kt+09SguxThpvV6XJ3b56Yf430kMlzJNrtYl73vzujwRlzV/Fj2d8jLMpWikl29p5PH24enaGmV8l7ZDmttE5Z7X5d4HIuOUl/yZfuHSvAZp6i6BxKnH+clzl5a1cdN2Ofcc6zDqtFw6borY6nEQsV0a1xJfwKXlmOZxdeDSBhFd8ujMa9yn7XLu+epBiGXhXDdu03YJJpJLmTRnPg4c50Qp1+9OXIHti6iHwReFaxKmdW24DFw6FvcPpD7wFQtZ+EJ7c7FelzWTZVTWLq0vQwlDuKxZzi4dL+kJQ3bEHZGl7lK0ivyLbgSJH4l9UEMNEJMwl2cx+6Xa+W6hxXDpJW2XXX+8nDTmFou0XXb98YnrskZCvbQoD5oGpkv5EN+0seBYKJfmnaSNfUAdS3nJM/l5deVlnIcj4S77gY2pYxuxSNhlSKypuYzzoGkmLqM8NxXmEmUOTCx0lxFkBtbj09cZjIdyaY7XicxzQJ357vdEQh0nTdAlzn3IOGhje2LYePZDhpWXKGs9xUF3ebAPv+MR6HLyOoPR0MZJrXe1UBnVh/SSgEttnDRBl6uqe1RqFkPmZuseFe+wMeJhTKy97lFJ0aVh3gZfG4J/rDfiyaUGsD/euBRLbVx+AQROCvzhYQSXl9fPoHWz0mCG4eHJLo+773/wdPkKXjcrDWYY0gwZC34zznO7vRf7+ztA5PLuWO7fnazA5QzDw/m69IxojqiasFwGrJuVCO7h4TFV04bvnXnwuQwvTjPL40qWSdBl+HrBC6LkXOe7b9ioqinEpRxyu7yoAxwj1mVdECW1+VyOuNkW4JK/Spdvdf8KRqwXvCBBLoNlBrjsZ7ep6wyuK10qOXdRl8rgpTo3K3y94EXpDfnWIZzVpTKovo45gyZ6QzUbXJraw75ka4zc9oWpP95tT1vraUlMLo3N8nld8mfHW9YxL9iE2aWhKTmzy375l4nrwCyJWgp2W0u4bGeyssq7BFnKLvsrHubImJrlY5bIDbwPyatswD3yFbhU53U8JkG1aoJHbvtim/1xo0tD84dcelFyrjJHxujS9QSwNXYLm3XZyzwMWfzRwphHYPN1qXxKLkfw6FKsCWcoGrVpcuDYLWzS5cP1ij6PcaGJEY8TZ++ytricHrd6FPfvTlblEu3NFZm75H0etDcE5O6yri2VO0LcPdm4rMnlSO6uVzz4g7ViErmssVb5sf9JcnHJsFw6osnDZZfByeUI7l2KISGUFZMcf5KMXCJh/5OQSzyycRlBZhYu68eP5oBc4kEu8cjCZSTIJR7kEg9yiQe5xINc4kEu8SCXeJBLPMglHuQSj226xLrlGMYmXeK9pCUIcokH1OWqnnlGuuUYCtDlyp4txXpJSxhAl+t65nkhtpkulwFaXq7smedF2GQ9vhDkEo9Al+tb6ykilC7xIJd4bLLfsxDUvsSD+j14ULrEg/o9eFA9jge5xINc4kEu8SCXeJBLPMglHuQSD3KJB7nEg1ziQS7xIJd4THNJaExx6VO9ZMhFDz4qOFJc5BIvLnKJFxe5xIuLXOLFRS7x4iKXhBtyiQe5xINc4kEu8cByefnph5g443udUhuST0n0vS1IhhzmNnkC3t6L3Qf04L43aLXnB7qgHiSXZ352/KIr36trRMjr1w92+eK58nN7xZXPugxYnu5mkrkOXrlDtucHuqABHJfl7u/mD84nGLZpyRPyzE+wdCuSIZsk8vO/IQH12Y2ukPz99J7Q7flBLkgBM4+Lk/zqy2fdyQFD3r59B+Xxy+ufwDwOSJft+cEuqAfTJc9iYJfKeymdIas3WHnJ39bGrx0QJagU5OcHu6CepdKl+pJUT5xAl+CD84La+ypMcX4LpktY8dJWpd5aXIasxM0Aj3dx8F+hLiGpTZ7fguUlzxb+aq/LkLA4GbhNVELzOCBdtucHu6CeZdqXMrWBFIFdNgf3Zdw25Lnw1VLd+S3SviQYucSEXOJBLvEgl3iQSzzIJR4puCxlv+Z6hDTgVc5dM/GxCTo02wM6gRNJwOXly2/+RraR3uVj5+Q8fOId1cQiAZfV0/9AXcpHOpeGFK0Mjvr7TUgs7/L2vm/+Y9LI9etfTU9QLKrQdK+//P3SjmtUhWFj91frkveuLy//PTZftTcXbt8+WBsLgwxWorC8S564Ki5FuDw21y1GFs7FqZFx4v8y8f3l5U3ZKBt9565bXe75cASPh3fJqycxAtfFohQFM7O8y5IPgfHRQunyjfWDOEIaT1VysLP5uN+QAzmllCTHGl+GHydeXA5DQbBRqeks7lIK48lMuhR3/6QG6aBJVTJhNb8OGyLEuXN5agP3P8pTHwts3BmDxV1W7dzv0+CS356V5SVXxV12YfqNSnWpa+Q/eHHZxZKPS1ntNJe7V1xymvw7uOwKvGHDnS771mUpC+I8XHZ2mkpFd9lstdmfl5en/kO5IbN/pZWXisu+dTlojsDSLsu2vdJ4610Kv80PUTX39bhIY9rGXT2uuCyVWLKpx4ckUz79v0+XvFgUjZ//dFNleKkqsrW6cde+HFz+/u1jiCWn9qUdcN509+TD+/kj2YRL983CnPrjVuAuXV3urMaJNsM/l7yG9lIYgWcAAAAASUVORK5CYII=" alt="Climb performance predicted and observed – Black markers indicate observed climb performance; Red markers indicate predicted performance. Climb rate predicted and observed – Black markers indicate observed climb performance; Green markers indicate predicted climb performance at observed climb speed" /></p>
 <div class="figure">
-<img src="data:image/png;base64,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" alt="Climb performance predicted and observed – Birds in the top-left quadrant are predicted at nearly the observed flight speed, but were observed climbing faster than alowed by the model, indicating their drag is estimated too high. The birds in the top-right quadrant are flying at a higher flight speed than predicted and their climbrate is also higher, suggesting most likely body drag is estimated too high. The birds in the lower-right quadrant may just have been observed performing a sub-optimal climb. Alternatively particularly their lift dependent drag may be under predicted in the model. The arrows indicate the climb rate predicted by the model for the observed flight speed. In this case all positive values indicate the drag in the model is too high." />
-<p class="caption"><strong>Climb performance predicted and observed</strong> – Birds in the top-left quadrant are predicted at nearly the observed flight speed, but were observed climbing faster than alowed by the model, indicating their drag is estimated too high. The birds in the top-right quadrant are flying at a higher flight speed than predicted and their climbrate is also higher, suggesting most likely body drag is estimated too high. The birds in the lower-right quadrant may just have been observed performing a sub-optimal climb. Alternatively particularly their lift dependent drag may be under predicted in the model. The arrows indicate the climb rate predicted by the model for the observed flight speed. In this case all positive values indicate the drag in the model is too high.</p>
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUsAAAEgCAMAAAAKWqE1AAAAflBMVEUAAAAAADoAAGYAOpAAZrY6AAA6ADo6AGY6OmY6OpA6ZrY6kNtmAABmADpmAGZmOgBmOpBmZjpmkJBmtv+QOgCQOjqQOmaQZgCQkGaQtpCQ29uQ2/+2ZgC225C2/7a2//++vr7NAADbkDrb///l5eX/tmb/25D//7b//9v///9vY2VxAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAN1UlEQVR4nO2di3bjKBKGnbTTsxl7ZnfHmVu3d5MovkTv/4IjQDekogCpQEDXf053FBuQ9KUoCoRgV7OotNv6AgoSs6QTs6QTs6STF8udu9480marVSzdk775lJupmCWdmCWdmCWdmCWdmCWdorG8XHxKzlIRWQr5lJ6dItZxgbJonDH9ZemGGbftKbuex27HLwKozzky0iYxUaE0N4ovi6S5WaxeoOPcst9TGs1t+5Bl0dy6P14Sza1ZluQ4t2dZF2OcSbAshGYiLIugmQzLAhxnQizr3I0z3liwW7qcaUYdV3dKmW9Vj1fHPR5SZEoz6ri6+8h6ljSjtj0+A8EZ0oz9jMKLZmY4N3hG4WFyedHcJr4sk6Yjy/uvr/X9uNt9+XBIDGkaq5dI052lwFnffnZIDGne73F3h7k4TneWt+cPZZ/WxJDAPmRhxunK8vjw7Q9hl88f9sSQDP3xomiCLK/tXPbT6IvPl92+vj6+zhK7yTi2URDNOcumidmr4wafzs6WGREyTuRDM2mcM5a6R9R/s2VGRPWMImWanvFly9bwQguidv6lybKKoBl7nMgIogCaGMsK95YL5l/W2LRBL5op4nS1y9uTrNQr2/EOgcFEfRAlSNOR5eeLio+uX5bGl4C/hIjmTNOjPz7+iSaG1PvLGYHpZ/nSnMdEx+G906FGr7dL8d9l8Jhjfu/v79onuTpOQ7/nIP5/+D583iJe3e8Z3XuH9L05fh8+maSyKh2aEMvPF9XxqfQRNntmROjcrEvLsv/d7xWBVGhCLO/HtkITx0QGDXY5kh/ONGjCdnmQx+fVdql4NP4Q7UOK7w25s3qqbvCXwjCrsb90ygyp9Yluc2DmmWt3E92cJhwTyZbGZpWudVyyWMZysDcnE92YZtj+uAQg/eFSljXQ9Lulja8YYxs2f2nVhNAY6MzXbug4jXX8y8f54JsZ0SqWkL1dBpu3J44juO15+N7ElvejDWY8liZAk9gUTxxapphIxOnUY24rBQEC7VIljo/TFKsLlpFidXcBfEyxKZw6rDC7XB+rDyJh6csnMk3EX1baM12XzIiIWCZNE4nVrd2eTVj6usKIjnObeW5rlaZxYmMb3pkR0bJMkyY25uadGRE1yxRpwm2PLRgyZEZEz9KfZmicsF3Onve4ZUYUgqW3tQWmmWfbM2gBTSS8X6fcWXrjUSP9Qa4kwliwVDiWvnje4eEQApn6PTXVM4pWIVn64TEOh6wWHF+qmCjB/jgsPzxR/eX9F2WQyY0TGRUMj5cwu4wz16AcYc90kxwnSlhorG4L11GWot4NT7ksc6yLULD4sm8PLu3zcWbplXms92HCpeD3dpmoT5dEs0GiwHbZQ5vZ5WzCYP4K14fUDa6bywoQZZaeid9agvrsf8W7dJZOY+t+MdHMX3YutUuTu+uMyFII9JeluM7ILDXp8PJ3na4sV78rBc5g0Sr1j2KXC99JmfV70NSl+suJlr0r1ceYTb9HoeR+z1K77Ps+3B8fa9G7UuJ1srbajt7hK5Zm2Fh98ICGfk9Riv0cUvV9yuSJsQTmBetrRLyxNFnYev0hEM1j9ZGF+pwzYW0510B7DaoAoK4sadaImOqiDxtlzhNkKd5GqbSJGzTv4kPyeasscYEsz18+bk/7+rzvPyZYI8IoHd8IaG59StNcVvFY90q9RoRJM2tUA8V1ZmMdJpbnhuM4JqJaI8IkeIWdS/Ysm8p9P4p3+PZABiwzIvtcgxnNfpjY/SzbytD27B6+d6tueGRG5DJvY4qt85e5AE1sLiu23lvyQBNjaZk0PfBMsY1PcF6wxfzSbeOxeW6bzQu21+Ykn7PB8y+p1tQZ5Dtn0PZoqM7ELiOv9WQQTjMXfxl3DTKzkm+4JzL4y9naeE6ZES2cF5wVzRlL50nBQGZEi+dYZ0QzufhyrmyqegYs61yME2YpR9GTWiMiB5pI25PYOynp08Ri9a1joqlSd5zpxuqgkqaZk11KJUwzH3/ZK9mqnks7ritNmnnEl3OlSDNXlilW9Xl/fIN9pZYqMZpzu4y+39kaJUXT0I7P9+FzyYwoEMukaObrL3sl4zgLYFmnYpxlsEyDZiksU6jq5bCsNzfOolgmuR9FgD0UYt3lhlUdji8D7KEQcTJ6SvtRBNpD4RJv3l86+1GE2kMh5jvPW1R1zC5Hc7PEGIeYhaCPtHu3Pe27Zouv1ktJ7EcB7KHQsJRDRrefscyIunZc3l+hjhOZy6pttfnr6+35g/D9nhJpOsaX9+PDtz+EXT6Tvd8TrRnadD8KcF3Wz5fdftoarY3VC2vVMZYx9pWKg3Or/SjOw5zBOPudRcEZ4ySYXQIK8W5pHcluNtmPYnFmRLaxjUjGGbR4kGU3N9joLzsn4H4eh3GiGDiDngNk2XR4qn19exo9OwuzrsFUcXCGKhnujx/ki+KjuVlh3x8fK2OaprGN20+v8l+rkOsaTBXBOMOcwTS2IdryEct4dikVHmeIM4D+UgTp54M2/zL0ugYzxcBJXCAcE533Ap5117PAz3tyo5lKfAkruHGSnsDkL0FVk89jPIeMgJOqJFM7DmoLlnV4nFTFw+PqBk+5Ecs6uOuk+WvBdpnQu6WdMjDOtNseXYFxri49J5Z1aJwrS4/GkmyaQbrGGc8u6VYJDm2cS3PGrOOEU4qC4lxadlx/2a0R7HMSk0LiXFY2MtcgyLpZl27iBgWIsDi9s8Cxeox1s6h85/oyqIrG+uPh182i4BnQOD2Lxvrjcd7FJ+AZFKd7WtguY6+btZ5nOJzuBRv85QbrZq3mKbOHWOfN9cJmLDddN2slT5U7xKJ5TpeVXn98Fc/3YOtiOlxUeiyFOp7eNTbkuphWmsvmwBgyI/IfJ7osqrFB18W01Bi4Hbd3ecDMiBaNuYWrsYuF0fR63mPLjGgZyzrBlWzNNL2eQ9oyI1o2FpziSrbmqg76y9tX69JEYGZEROPqqQikCbN8SqDtSVwATawPadWPzBKo6km3PclLp5l225O+xjS57VmroapnM28jZbU00+yPZydJk1kSqaHJLMk0izh39+OB/eUyudplnHel8pYjy8jvpOQpR5Yx35XKVo7PztguHeTqL6O/K5WhOCaiE8BSDbndnuwDHMxS05yl2JZYHHU/NXHbg2jOsp/dRrvOoM9FZaoZy9HgpXluVpA1IrIXEBP1g+oJ7t+TtACWg10ySy8B/rJ/cDZesxEc7mCWmuYs++VftHVgwGdAzFITEF+qmax1pS9BBi2mxSw1wc8hRW12eEbOLDVxH5JOXiy3exc/CzFLOjFLOrG/pBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpBOzpNM6lu5680ibrdaw9MEeJGmotDTFMku6YpklXbHMkq5YZklXLLOkK5ZZ0hUbiuWPKGZJJ2ZJJ2ZJJ2ZJJ2qW92O3/+lwZE0qFoHFtx4YF9atJ2lP+/myw/fD0y7BtqJQffvpdXYxYxGzFPdZ7fUja1KxTAq+XL5WWIVzH6U9nyYLeKKXYNvS8drSNt4ZMUuxlp768w1H1qRXcWFnDNC4sNu//o2y1C/B8Wpvzx+25OeHv9UVGO+MmKW8Jrkaz3BkTSovEEs6Tvv5+ze8jo8v4U+8jg9JXeyyA2i8M2KWokqp8wxH1qS1dXuRUdrqYPGXQ1qxeJW4cZdird697lka7ywNu7QtF6kVa2G56BKEu7YuDRjZLhf5S331MzxtJR8OYORHl/AfC8uRy7bVInmZcf2lqKtdO36wteNdAitKvTCLXY7Sni11fHQJHnZpvLMw8aU4q2N82SRVtoY3zn2xrvFlewk4nyHpdWcJRWvFErsz7vfQiVnSiVnSiVnSiVnSiVnSiVnSKQLLs+qmOO+O2uv60PfWh6yGwB6NyUdFTbOJiNXa4XFUeJa3r/+1jrLC6gGMexkGlld8uWMDy/vxsetBEig8y+rxf9Y+IqwOgGbRBpbo8KeJ5bVdP97Wk3JUcJafL3u1qY0gcv/lr+bq5b50TVf5699Pu249cuDg4a8WgOooX9VXt6ff2lxtMeosv3/vi1MngYvSdN0d2j64dejSScFZCouoxJ1IlmJfG2lZ192pYXESP2v5vdw/qD84P4oucgtA7kwgEt6P++brNk1XjEzSuMu+OLV5DlzU7OoUS5M79VNwlmJjBjk8qVgehi1E1O5LjUmo0cvm4/5AVeTzQztMe+gGi5t7bnM9vmrDOtf9pDi4qJnaQuwjVS4KzVLdobANxfLUO/z2Bho8yiqaX4cDVas7lqcucfN/n6srRkqMrg1fnLq806Jmalnaty5yUWiWVTu1+zSwVPsMnNpHj4Jll6Y/qMYAJCRFqsmvcon/22KEGnc5FKdYgkXNlBNL1exIRzewFGoq3cCyu9HhwMEuu2LEDxFdTliCRQlV43H5nFh291CpWxxYCgtT1V84uFP/oTpQwCrEX/YTGmQOEV3qxcFFza8vI3957qdFHHqWkq+k0hz07bg0Me0AacfFL10xMoW03PYLhREuaqqM2vHh731+/H9vl8KXyYjlt27ui6h3j6+TAyy+HBUjAtjGXQ5ftCY5Lap1N7ryii/Ncq5Ybj35FfXUf6gAVA4s8eeZ/sXNlE1/3Cj3m3fqLy9nmc840Y+jfwB5FfSvvVAFPgAAAABJRU5ErkJggg==" alt />
+<p class="caption"><strong>Climb performance predicted and
+observed</strong> – Birds in the top-left quadrant are predicted at
+nearly the observed flight speed, but were observed climbing faster than
+alowed by the model, indicating their drag is estimated too high. The
+birds in the top-right quadrant are flying at a higher flight speed than
+predicted and their climbrate is also higher, suggesting most likely
+body drag is estimated too high. The birds in the lower-right quadrant
+may just have been observed performing a sub-optimal climb.
+Alternatively particularly their lift dependent drag may be under
+predicted in the model. The arrows indicate the climb rate predicted by
+the model for the observed flight speed. In this case all positive
+values indicate the drag in the model is too high.</p>
 </div>
 <div id="references" class="section level2 unnumbered">
-<h2>References</h2>
-<div id="refs" class="references">
-<div id="ref-Hedenstrom1992a">
-<p><strong>Hedenström A, Alerstam T</strong>. 1992. Climbing performance of migrating birds as a basis for estimating limits for fuel-carrying capacity and muscle work. J. Exp. Biol. <strong>164</strong>, 19–38.</p>
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body">
+<div id="ref-Hedenstrom1992a" class="csl-entry">
+<strong>Hedenström A, Alerstam T</strong>. 1992. <a href="https://journals.biologists.com/jeb/article/164/1/19/6109/CLIMBING-PERFORMANCE-OF-MIGRATING-BIRDS-AS-A-BASIS"><span class="nocase">Climbing performance of migrating birds as a basis for
+estimating limits for fuel-carrying capacity and muscle work</span></a>.
+J. Exp. Biol. <strong>164</strong>, 19–38.
 </div>
 </div>
 </div>
