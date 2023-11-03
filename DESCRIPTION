@@ -1,12 +1,12 @@
 Package: afpt
 Title: Tools for Modelling of Animal Flight Performance
-Version: 1.1.0.3
-Date: 2023-03-10
+Version: 1.1.0.4
+Date: 2023-11-03
 Encoding: UTF-8
 Authors@R: c(
         person("Marco",
                 "KleinHeerenbrink",
-                email = "Marco.KleinHeerenbrink@biology.ox.ac.uk",
+                email = "animalflightperformancetools@gmail.com",
                 role = c("aut","cre"),
                 comment = c(ORCID = "0000-0001-8172-8121")),
         person("Anders",
@@ -30,10 +30,10 @@ Suggests: knitr, rmarkdown, testthat
 VignetteBuilder: knitr
 License: GPL (>= 3)
 NeedsCompilation: no
-Packaged: 2023-03-13 13:57:32 UTC; zool2198
+Packaged: 2023-11-03 11:37:57 UTC; marcokleinheerenbrink
 Author: Marco KleinHeerenbrink [aut, cre]
     (<https://orcid.org/0000-0001-8172-8121>),
   Anders Hedenström [fnd] (<https://orcid.org/0000-0002-1757-0945>)
-Maintainer: Marco KleinHeerenbrink <Marco.KleinHeerenbrink@biology.ox.ac.uk>
+Maintainer: Marco KleinHeerenbrink <animalflightperformancetools@gmail.com>
 Repository: CRAN
-Date/Publication: 2023-03-13 15:10:02 UTC
+Date/Publication: 2023-11-03 14:40:06 UTC

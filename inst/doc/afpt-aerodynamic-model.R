@@ -16,7 +16,7 @@ myBird <- Bird(
 speed <- seq(6,18,length.out=6) #  airspeed in m/s
 powercurve <- computeFlappingPower(myBird,speed)
 
-## ---- fig.show='hold', fig.width=3.45, fig.cap="**Drag components** -- Black: total drag; red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag; yellow triangles: parasitic drag."----
+## ----fig.show='hold', fig.width=3.45, fig.cap="**Drag components** -- Black: total drag; red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag; yellow triangles: parasitic drag."----
 par(mar=c(3.1,3.1,0.4,1.1),mgp=c(1.9,0.7,0.0),cex=0.75)
 with(powercurve , plot( speed, Dnf.ind+Dnf.pro0+Dnf.pro2+Dnf.par, 
                         type='b', pch=15, col='grey20', 
@@ -44,7 +44,7 @@ with(myBird,coef.bodyDragCoefficient*bodyFrontalArea)
 ## -----------------------------------------------------------------------------
 powercurve[c('speed','amplitude','strokeplane','frequency')]
 
-## ---- fig.show='hold', fig.width=3.45, fig.cap="**Drag factors** -- red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag."----
+## ----fig.show='hold', fig.width=3.45, fig.cap="**Drag factors** -- red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag."----
 par(mar=c(3.1,3.1,0.4,1.1),mgp=c(1.9,0.7,0.0),cex=0.75)
 kf <- 2*pi*myBird$wingSpan*myBird$wingbeatFrequency / speed #  reduced frequency
 phi <- powercurve$strokeplane*pi/180 #  strokeplane angle in radians (optimized)
@@ -76,7 +76,7 @@ fP <- data.frame(
 ## -----------------------------------------------------------------------------
 kP <- 1 + fP*thrustratio
 
-## ---- fig.show='hold', fig.width=3.45, fig.cap="**Power factors** -- red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag."----
+## ----fig.show='hold', fig.width=3.45, fig.cap="**Power factors** -- red circles: induced drag; green squares: zero-lift profile drag; blue diamonds: lift-dep. profile drag."----
 par(mar=c(3.1,3.1,0.4,1.1),mgp=c(1.9,0.7,0.0),cex=0.75)
 plot( speed, fP$ind, type='b', pch=21, col='red3', 
       xlab=NA, ylab=NA, xlim=c(0,20), ylim=c(-0.4,8))

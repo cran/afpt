@@ -13,7 +13,7 @@ myBirds$coef.profileDragLiftFactor[myBirds$name=='Mute swan'] = 0
 
 myBirds[c('name','massTotal','wingSpan','wingArea','wingbeatFrequency')]
 
-## ---- warning = FALSE---------------------------------------------------------
+## ----warning = FALSE----------------------------------------------------------
 myBirds$powerAvailable <- computeAvailablePower(myBirds)
 climbperf <- findMaximumClimbRate(myBirds,maximumPower = myBirds$powerAvailable,strokeplane=20)
 climbperf[c('speed','climbRate','frequency','amplitude')]
@@ -38,7 +38,7 @@ climbperf2 <- findMaximumClimbRate(
                     
 climbperf2[c('speed','climbRate','frequency','amplitude','strokeplane')]
 
-## ---- echo=FALSE, fig.show='hold', fig.width=3.45, fig.cap="**Climb performance predicted and observed** -- Black markers indicate observed climb performance; Red markers indicate predicted performance. **Climb rate predicted and observed** -- Black markers indicate observed climb performance; Green markers indicate predicted climb performance at observed climb speed"----
+## ----echo=FALSE, fig.show='hold', fig.width=3.45, fig.cap="**Climb performance predicted and observed** -- Black markers indicate observed climb performance; Red markers indicate predicted performance. **Climb rate predicted and observed** -- Black markers indicate observed climb performance; Green markers indicate predicted climb performance at observed climb speed"----
 
 par(mar=c(3.1,3.1,0.4,1.1),mgp=c(1.9,.7,0),cex=0.75)
 
@@ -59,7 +59,7 @@ text(climbperf2$speed-.5,climbperf2$climbRate-.1,climbperf2$number)
 mtext(side = 1, line = 2,'Airspeed (m/s)')
 mtext(side = 2, line = 2,'Climb rate (m/s)')
 
-## ---- echo=FALSE, fig.show='hold', fig.width=3.45, fig.cap="**Climb performance predicted and observed** -- Birds in the top-left quadrant are predicted at nearly the observed flight speed, but were observed climbing faster than alowed by the model, indicating their drag is estimated too high. The birds in the top-right quadrant are flying at a higher flight speed than predicted and their climbrate is also higher, suggesting most likely body drag is estimated too high. The birds in the lower-right quadrant may just have been observed performing a sub-optimal climb. Alternatively particularly their lift dependent drag may be under predicted in the model. The arrows indicate the climb rate predicted by the model for the observed flight speed. In this case all positive values indicate the drag in the model is too high."----
+## ----echo=FALSE, fig.show='hold', fig.width=3.45, fig.cap="**Climb performance predicted and observed** -- Birds in the top-left quadrant are predicted at nearly the observed flight speed, but were observed climbing faster than alowed by the model, indicating their drag is estimated too high. The birds in the top-right quadrant are flying at a higher flight speed than predicted and their climbrate is also higher, suggesting most likely body drag is estimated too high. The birds in the lower-right quadrant may just have been observed performing a sub-optimal climb. Alternatively particularly their lift dependent drag may be under predicted in the model. The arrows indicate the climb rate predicted by the model for the observed flight speed. In this case all positive values indicate the drag in the model is too high."----
 par(mar=c(3.1,3.1,0.4,1.1),mgp=c(1.9,.7,0),cex=0.75)
 
 plot(climbing_birds$climbSpeed/climbperf$speed-1,

@@ -22,7 +22,7 @@ myBird$wingbeatFrequency <- 5
 flightperf <- computeFlightPerformance(myBird)
 flightperf
 
-## ---- fig.show='hold', fig.width=3.45, fig.cap="**Powercurves** -- aerodynamic power in black; chemical power in red. **Peak amplitude** -- optimal flapping amplitude corresponding to powercurve "----
+## ----fig.show='hold', fig.width=3.45, fig.cap="**Powercurves** -- aerodynamic power in black; chemical power in red. **Peak amplitude** -- optimal flapping amplitude corresponding to powercurve "----
 powercurve <- flightperf$powercurve
 plot(flightperf,symbol.speed="U")
 
@@ -39,7 +39,7 @@ flightperf$table[,grep('^flags.',names(flightperf$table))]
 ## -----------------------------------------------------------------------------
 flightperf$table[,grep('^Dnf.',names(flightperf$table))]
 
-## ---- fig.show='hold', fig.width=3.45, fig.cap="**Non-flapping drag components** -- Red: induced drag; green: zero-lift profile drag; blue: lift-dep. profile drag; yellow: parasitic drag;"----
+## ----fig.show='hold', fig.width=3.45, fig.cap="**Non-flapping drag components** -- Red: induced drag; green: zero-lift profile drag; blue: lift-dep. profile drag; yellow: parasitic drag;"----
 par(mar=c(3.1,3.1,0.4,1.1),mgp=c(1.9,.7,0),cex=0.75)
 with(powercurve , plot( speed, Dnf.ind, type='b', col='red3', 
                         xlab=NA, ylab=NA, xlim=c(0,20), ylim=c(0.0,0.20)))
@@ -55,7 +55,7 @@ flightperf$table[,grep('^kD.',names(flightperf$table))]
 ## -----------------------------------------------------------------------------
 flightperf$table[,grep('^kP.',names(flightperf$table))]
 
-## ---- fig.show='hold', fig.width=3.45, fig.cap="**Drag factors** -- Red: induced drag; green: zero-lift profile drag; blue: lift-dep. profile drag; there is no factor for parasitic drag, because this component is assumed independent of wingbeat kinematics. **Power factors** -- same legend."----
+## ----fig.show='hold', fig.width=3.45, fig.cap="**Drag factors** -- Red: induced drag; green: zero-lift profile drag; blue: lift-dep. profile drag; there is no factor for parasitic drag, because this component is assumed independent of wingbeat kinematics. **Power factors** -- same legend."----
 par(mar=c(3.1,3.1,0.4,1.1),mgp=c(1.9,.7,0),cex=0.75)
 with(powercurve , plot( speed, kD.ind, type='b', col='red3', 
                         xlab=NA, ylab=NA, xlim=c(0,20), ylim=c(0.5,2.5)))
